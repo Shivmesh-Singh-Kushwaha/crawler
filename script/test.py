@@ -7,7 +7,7 @@ RE_TITLE = re.compile(r'<title>([^<]+)</title>', re.S | re.I)
 
 class TestCrawler(Crawler):
     def task_generator(self):
-        for host in islice(open('var/domains.txt'), 100):
+        for host in islice(open('var/domains.txt'), 20):
             host = host.strip()
             if host:
                 yield Request('http://%s/' % host, tag='page')
@@ -22,7 +22,7 @@ class TestCrawler(Crawler):
 
 
 def main(**kwargs):
-    bot = TestCrawler(concurrency=10)
+    bot = TestCrawler(concurrency=5)
     bot.run()
 
 
