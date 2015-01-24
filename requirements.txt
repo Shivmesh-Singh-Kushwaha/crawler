@@ -1,0 +1,4 @@
+cython
+aiohttp
+-e git+https://github.com/lorien/runscript#egg=runscript
+pyprof2calltree
