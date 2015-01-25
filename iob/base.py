@@ -3,20 +3,11 @@ import asyncio
 from asyncio import Queue, QueueEmpty
 import logging
 
+from .request import Request
+from .response import Response
+
 
 logger = logging.getLogger('iob.base')
-
-class Request(object):
-    def __init__(self, url, callback=None, tag=None):
-        self.url = url
-        self.callback = callback
-        self.tag = tag
-
-
-class Response(object):
-    def __init__(self, body):
-        self.body = body
-
 
 class Crawler(object):
     def __init__(self, concurrency=10):
@@ -33,6 +24,10 @@ class Crawler(object):
     def task_generator_processor(self):
         for task in self.task_generator():
             yield from self._task_queue.put(task)
+
+    def add_task(self, task):
+        for x in self._task_queue.put(task):
+            pass
 
     @asyncio.coroutine
     def perform_request(self, req):
@@ -95,3 +90,7 @@ class Crawler(object):
 
     def shutdown(self):
         logger.debug('Work done!')
+
+    def task_generator(self):
+        if False:
+            yield None

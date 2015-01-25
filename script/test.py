@@ -1,30 +1,47 @@
-import re
-from itertools import islice
+#!/usr/bin/env python
+# coding: utf-8
+import unittest
+import sys
+from copy import copy
+import os
 
-from iob import Crawler, Request
+# Hack to be able to work with `test` package :-/
+del sys.modules['test']
+from test.util.server import server
 
-RE_TITLE = re.compile(r'<title>([^<]+)</title>', re.S | re.I)
+TEST_LIST = (
+    'test.simple',
+)
 
-class TestCrawler(Crawler):
-    def task_generator(self):
-        for host in islice(open('var/domains.txt'), 20):
-            host = host.strip()
-            if host:
-                yield Request('http://%s/' % host, tag='page')
-
-    def handler_page(self, req, res):
-        print('Result of request to {}'.format(req.url))
-        try:
-            title = RE_TITLE.search(res.body).group(1)
-        except AttributeError:
-            title = 'N/A'
-        print('Title: {}'.format(title))
+def setup_arg_parser(parser):
+    parser.add_argument('-t', '--test-only', help='Run only specified tests')
 
 
-def main(**kwargs):
-    bot = TestCrawler(concurrency=5)
-    bot.run()
+def main(test_only, **kwargs):
+    if test_only:
+        test_list = [test_only]
+    else:
+        test_list = TEST_LIST
 
+    # Ensure that all test modules are imported correctly
+    for path in test_list:
+        __import__(path, None, None, ['foo'])
 
-if __name__ == '__main__':
-    main()
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    for path in test_list:
+        mod_suite = loader.loadTestsFromName(path)
+        for some_suite in mod_suite:
+            for test in some_suite:
+                suite.addTest(test)
+
+    runner = unittest.TextTestRunner()
+
+    server.start()
+    result = runner.run(suite)
+    server.stop()
+
+    if result.wasSuccessful():
+        sys.exit(0)
+    else:
+        sys.exit(1)

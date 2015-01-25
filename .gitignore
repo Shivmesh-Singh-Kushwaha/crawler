@@ -10,3 +10,4 @@
 /.env
 /pip-log.txt
 /var/
+/.tox/
