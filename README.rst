@@ -2,11 +2,16 @@
 Iob
 ===
 
+.. image:: https://travis-ci.org/lorien/iob.png
+    :target: https://travis-ci.org/lorien/iob
+
 Yet another web scraping framewor
 
 
 Usage Example
 =============
+
+Example::
 
     import re
     from itertools import islice
