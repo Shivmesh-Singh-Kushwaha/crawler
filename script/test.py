@@ -5,8 +5,6 @@ import sys
 from copy import copy
 import os
 
-# Hack to be able to work with `test` package :-/
-del sys.modules['test']
 from test.util.server import server
 
 TEST_LIST = (
