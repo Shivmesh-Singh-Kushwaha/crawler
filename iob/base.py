@@ -26,6 +26,7 @@ class Crawler(object):
             yield from self._task_queue.put(task)
 
     def add_task(self, task):
+        # blocking!
         for x in self._task_queue.put(task):
             pass
 
