@@ -9,6 +9,7 @@ from test.util.server import server
 
 TEST_LIST = (
     'test.basic',
+    'test.request',
 )
 
 def setup_arg_parser(parser):
