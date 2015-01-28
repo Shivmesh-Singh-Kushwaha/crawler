@@ -3,6 +3,6 @@ python:
   - "3.4"
 install:
   - pip install -r requirements.txt
-  - pip install coverage coveralls
+  - pip install runscript coverage coveralls
 script:
-  coverage run --source=iob /usr/local/bin/run test
+    coverage run --source=iob -m runscript.cli test
