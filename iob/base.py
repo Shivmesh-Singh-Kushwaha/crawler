@@ -5,6 +5,7 @@ import logging
 
 from .request import Request, SleepTask
 from .response import Response
+from .error import UnknownTaskType
 
 
 logger = logging.getLogger('iob.base')
@@ -28,12 +29,11 @@ class Crawler(object):
             elif isinstance(task, SleepTask):
                 yield from asyncio.sleep(task.delay)
             else:
-                raise Exception('Unknown task got from task_generator: %s' % task)
+                raise UnknownTaskType('Unknown task got from task_generator: %s' % task)
 
     def add_task(self, task):
         # blocking!
-        for x in self._task_queue.put(task):
-            pass
+        list(self._task_queue.put(task))
 
     @asyncio.coroutine
     def perform_request(self, req):

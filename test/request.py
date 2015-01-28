@@ -3,6 +3,7 @@ from unittest import TestCase
 
 from test.util.server import server
 from iob import Crawler, Request
+from iob.error import RequestConfigurationError
 
 
 class RequestTestCase(TestCase):
@@ -31,3 +32,31 @@ class RequestTestCase(TestCase):
         self.assertEqual(req.meta, 1)
         req = Request(meta={'place': 'hell'})
         self.assertEqual(req.meta, {'place': 'hell'})
+
+    def test_callback_argument(self):
+
+        class SimpleCrawler(Crawler):
+            def prepare(self):
+                self.points = []
+
+            def task_generator(self):
+                yield Request(url=server.get_url(), callback=self.handler_test)
+
+            def handler_test(self, req, res):
+                self.points.append(1)
+
+        bot = SimpleCrawler()
+        bot.run()
+        self.assertEqual(bot.points, [1])
+
+    def test_callback_and_tag_arguments_conflict(self):
+
+        class SimpleCrawler(Crawler):
+            def task_generator(self):
+                yield Request('test', url=server.get_url(), callback=self.handler_test)
+
+            def handler_test(self, req, res):
+                pass
+
+        bot = SimpleCrawler()
+        self.assertRaises(RequestConfigurationError, bot.run)

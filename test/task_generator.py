@@ -4,7 +4,9 @@ import asyncio
 import time
 
 from test.util.server import server
-from iob import Crawler, Request, SleepTask
+from iob import Crawler
+from iob.request import Request, SleepTask
+from iob.error import UnknownTaskType
 
 
 class BasicTestCase(TestCase):
@@ -97,3 +99,11 @@ class BasicTestCase(TestCase):
         bot.run()
         self.assertTrue(2, len(bot.points))
         self.assertTrue(abs(bot.points[0] - bot.points[1]) > 1)
+
+    def test_unknown_task_type_error(self):
+        class SimpleCrawler(Crawler):
+            def task_generator(self):
+                yield {'message': 'Show must go on!'}
+
+        bot = SimpleCrawler()
+        self.assertRaises(UnknownTaskType, bot.run)
