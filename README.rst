@@ -5,6 +5,9 @@ Iob
 .. image:: https://travis-ci.org/lorien/iob.png
     :target: https://travis-ci.org/lorien/iob
 
+.. image:: https://coveralls.io/repos/lorien/iob/badge.svg
+    :target: https://coveralls.io/r/lorien/iob
+
 Yet another web scraping framewor
 
 
