@@ -18,36 +18,12 @@ class BasicTestCase(TestCase):
                 self.data['response'] = res.body
 
         token = 'Python'
-        server.response['data'] = token
+        server.response['body'] = token
 
         bot = SimpleCrawler()
         bot.add_task(Request('test', url=server.get_url()))
         bot.run()
         self.assertEquals(token, bot.data['response'])
-
-    def test_simple_task_generator(self):
-
-        class SimpleCrawler(Crawler):
-            data = {'count': 0}
-
-            def task_generator(self):
-                for x in range(3):
-                    yield Request('test', url=server.get_url())
-
-            def handler_test(self, req, res):
-                self.data['count'] += 1
-
-        bot = SimpleCrawler()
-        bot.run()
-        self.assertEquals(3, bot.data['count'])
-
-    def test_not_defined_task_generator(self):
-
-        class SimpleCrawler(Crawler):
-            pass
-
-        bot = SimpleCrawler()
-        bot.run()
 
     def test_concurrency(self):
         """
@@ -72,7 +48,6 @@ class BasicTestCase(TestCase):
         bot.run()
         self.assertEqual(len(bot.counters), 10)
         self.assertTrue(all(x in [0, 1] for x in bot.counters))
-
 
         bot = SimpleCrawler(concurrency=4)
         bot.run()
@@ -102,3 +77,23 @@ class BasicTestCase(TestCase):
         bot = SimpleCrawler()
         bot.run()
         self.assertEqual(bot.counter, 10)
+
+    def test_shutdown_method(self):
+
+        class SimpleCrawler(Crawler):
+            def prepare(self):
+                self.points = []
+
+            def shutdown(self):
+                self.points.append('done')
+
+            def task_generator(self):
+                yield Request('test', url=server.get_url())
+
+            def handler_test(self, req, res):
+                self.points.append(res.body)
+
+        server.response['body'] = 'Moon'
+        bot = SimpleCrawler()
+        bot.run()
+        self.assertEqual(bot.points, ['Moon', 'done'])

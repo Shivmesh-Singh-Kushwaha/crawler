@@ -3,7 +3,7 @@ import asyncio
 from asyncio import Queue, QueueEmpty
 import logging
 
-from .request import Request
+from .request import Request, SleepTask
 from .response import Response
 
 
@@ -23,7 +23,12 @@ class Crawler(object):
     @asyncio.coroutine
     def task_generator_processor(self):
         for task in self.task_generator():
-            yield from self._task_queue.put(task)
+            if isinstance(task, Request):
+                yield from self._task_queue.put(task)
+            elif isinstance(task, SleepTask):
+                yield from asyncio.sleep(task.delay)
+            else:
+                raise Exception('Unknown task got from task_generator: %s' % task)
 
     def add_task(self, task):
         # blocking!
@@ -80,14 +85,16 @@ class Crawler(object):
         task_gen_future = self._loop.create_task(self.task_generator_processor())
         worker_man_future = self._loop.create_task(self.worker_manager())
         self._main_loop_enabled = True
-        while self._main_loop_enabled:
-            if (not len(self._workers)
-                and task_gen_future.done()
-                and not self._task_queue.qsize()):
-                self._main_loop_enabled = False
-            else:
+        try:
+            while self._main_loop_enabled:
+                if task_gen_future.done():
+                    if task_gen_future.exception():
+                        raise task_gen_future.exception()
+                    if (not len(self._workers) and not self._task_queue.qsize()):
+                        self._main_loop_enabled = False
                 yield from asyncio.sleep(0.5)
-        worker_man_future.cancel()
+        finally:
+            worker_man_future.cancel()
         self.shutdown()
 
     def shutdown(self):

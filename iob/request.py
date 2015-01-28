@@ -7,3 +7,9 @@ class Request(object):
             self.meta = {}
         else:
             self.meta = meta
+
+
+class SleepTask(object):
+    def __init__(self, delay):
+        assert isinstance(delay, (int, float))
+        self.delay = delay

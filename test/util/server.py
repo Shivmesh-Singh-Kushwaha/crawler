@@ -18,12 +18,12 @@ class DebugServer(object):
 
     def reset(self):
         self.response = {
-            'body': b'',
+            'body': '',
         }
 
     @asyncio.coroutine
     def handler(self, request):
-        return web.Response(body=b'Python')
+        return web.Response(body=self.response['body'].encode('utf-8'))
 
     @asyncio.coroutine
     def stop_handler(self, request):

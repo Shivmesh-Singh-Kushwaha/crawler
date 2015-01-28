@@ -10,6 +10,7 @@ from test.util.server import server
 TEST_LIST = (
     'test.basic',
     'test.request',
+    'test.task_generator',
 )
 
 def setup_arg_parser(parser):
