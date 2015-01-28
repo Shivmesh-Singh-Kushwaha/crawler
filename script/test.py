@@ -8,7 +8,7 @@ import os
 from test.util.server import server
 
 TEST_LIST = (
-    'test.simple',
+    'test.basic',
 )
 
 def setup_arg_parser(parser):

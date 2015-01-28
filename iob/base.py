@@ -60,7 +60,7 @@ class Crawler(object):
                     handler_tag = key[8:]
                     self._handlers[handler_tag] = thing
 
-    def process_done_worker(self, worker):
+    def request_completed_callback(self, worker):
         self._free_workers.release()
         del self._workers[id(worker)]
 
@@ -70,11 +70,12 @@ class Crawler(object):
             task = yield from self._task_queue.get()
             ok = yield from self._free_workers.acquire()
             worker = self._loop.create_task(self.perform_request(task))
-            worker.add_done_callback(self.process_done_worker)
+            worker.add_done_callback(self.request_completed_callback)
             self._workers[id(worker)] = worker
 
     @asyncio.coroutine
     def main_loop(self):
+        self.prepare()
         self.register_handlers()
         task_gen_future = self._loop.create_task(self.task_generator_processor())
         worker_man_future = self._loop.create_task(self.worker_manager())
@@ -91,6 +92,9 @@ class Crawler(object):
 
     def shutdown(self):
         logger.debug('Work done!')
+
+    def prepare(self):
+        pass
 
     def task_generator(self):
         if False:
