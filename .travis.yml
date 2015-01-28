@@ -6,3 +6,5 @@ install:
   - pip install runscript coverage coveralls
 script:
     coverage run --source=iob -m runscript.cli test
+after_success:
+  coveralls
