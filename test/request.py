@@ -53,7 +53,8 @@ class RequestTestCase(TestCase):
 
         class SimpleCrawler(Crawler):
             def task_generator(self):
-                yield Request('test', url=server.get_url(), callback=self.handler_test)
+                yield Request('test', url=server.get_url(),
+                              callback=self.handler_test)
 
             def handler_test(self, req, res):
                 pass

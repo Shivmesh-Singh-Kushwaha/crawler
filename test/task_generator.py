@@ -1,6 +1,5 @@
 # coding: utf-8
 from unittest import TestCase
-import asyncio
 import time
 
 from test.util.server import server
@@ -62,7 +61,7 @@ class BasicTestCase(TestCase):
         self.assertRaises(ZeroDivisionError, bot.run)
         try:
             bot.run()
-        except Exception as ex:
+        except Exception:
             self.assertEqual(bot.points, ['done'])
 
     def test_sleep_task_from_task_generator(self):

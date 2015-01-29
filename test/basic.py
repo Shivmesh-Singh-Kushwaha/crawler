@@ -105,8 +105,10 @@ class BasicTestCase(TestCase):
                 self.points = []
 
             def task_generator(self):
-                yield Request('test', url=server.get_url(), timeout=0.1, meta={'id': 1})
-                yield Request('test', url=server.get_url(), timeout=0.5, meta={'id': 2})
+                yield Request('test', url=server.get_url(), timeout=0.1,
+                              meta={'id': 1})
+                yield Request('test', url=server.get_url(), timeout=0.5,
+                              meta={'id': 2})
 
             def handler_test(self, req, res):
                 self.points.append(req.meta['id'])
@@ -115,4 +117,4 @@ class BasicTestCase(TestCase):
         bot = SimpleCrawler()
         bot.run()
         # TODO: Fix it!
-        #self.assertEqual(bot.points, [2])
+        # self.assertEqual(bot.points, [2])

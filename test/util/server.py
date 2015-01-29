@@ -6,6 +6,7 @@ import urllib.request
 from urllib.parse import urljoin
 from urllib.error import URLError
 
+
 class DebugServer(object):
     def __init__(self, ip='127.0.0.1', port=9999):
         self.port = port
@@ -32,7 +33,8 @@ class DebugServer(object):
         return web.Response(body=b'')
 
     def server_thread(self):
-        fut = self.loop.create_server(self.app.make_handler(), self.ip, self.port)
+        fut = self.loop.create_server(self.app.make_handler(),
+                                      self.ip, self.port)
         srv = self.loop.run_until_complete(fut)
         print('Serving on', srv.sockets[0].getsockname())
         self.loop.run_forever()
@@ -48,7 +50,6 @@ class DebugServer(object):
                 time.sleep(0.01)
             else:
                 break
-
 
     def stop(self):
         urllib.request.urlopen(self.get_url('/stop')).read()

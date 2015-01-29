@@ -1,6 +1,5 @@
 import aiohttp
 import asyncio
-from asyncio import Queue, QueueEmpty
 import logging
 
 from .request import Request, SleepTask
@@ -8,7 +7,11 @@ from .response import Response
 from .error import UnknownTaskType
 
 
+__all__ = ('Crawler',)
+
+
 logger = logging.getLogger('iob.base')
+
 
 class Crawler(object):
     def __init__(self, concurrency=10):
@@ -29,7 +32,8 @@ class Crawler(object):
             elif isinstance(task, SleepTask):
                 yield from asyncio.sleep(task.delay)
             else:
-                raise UnknownTaskType('Unknown task got from task_generator: %s' % task)
+                raise UnknownTaskType('Unknown task got from task_generator: '
+                                      '%s' % task)
 
     def add_task(self, task):
         # blocking!
@@ -39,7 +43,8 @@ class Crawler(object):
     def perform_request(self, req):
         logging.debug('Requesting {}'.format(req.url))
         try:
-            io_res = yield from asyncio.wait_for(aiohttp.request('get', req.url), req.timeout)
+            io_res = yield from asyncio.wait_for(
+                aiohttp.request('get', req.url), req.timeout)
         except Exception as ex:
             self.process_failed_request(req, ex)
         else:
@@ -56,7 +61,7 @@ class Crawler(object):
                 elif req.tag and req.tag in self._handlers:
                     self._handlers[req.tag](req, res)
 
-    def process_failed_request(self, req, exc):
+    def process_failed_request(self, req, ex):
         logging.error('', exc_info=ex)
 
     def register_handlers(self):
@@ -76,7 +81,7 @@ class Crawler(object):
     def worker_manager(self):
         while True:
             task = yield from self._task_queue.get()
-            ok = yield from self._free_workers.acquire()
+            yield from self._free_workers.acquire()
             worker = self._loop.create_task(self.perform_request(task))
             worker.add_done_callback(self.request_completed_callback)
             self._workers[id(worker)] = worker
@@ -85,7 +90,8 @@ class Crawler(object):
     def main_loop(self):
         self.prepare()
         self.register_handlers()
-        task_gen_future = self._loop.create_task(self.task_generator_processor())
+        task_gen_future = self._loop.create_task(
+            self.task_generator_processor())
         worker_man_future = self._loop.create_task(self.worker_manager())
         self._main_loop_enabled = True
         try:
@@ -93,7 +99,8 @@ class Crawler(object):
                 if task_gen_future.done():
                     if task_gen_future.exception():
                         raise task_gen_future.exception()
-                    if (not len(self._workers) and not self._task_queue.qsize()):
+                    if (not len(self._workers) and
+                            not self._task_queue.qsize()):
                         self._main_loop_enabled = False
                 yield from asyncio.sleep(0.5)
         finally:
