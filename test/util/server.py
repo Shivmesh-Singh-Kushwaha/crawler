@@ -19,6 +19,7 @@ class DebugServer(object):
     def reset(self):
         self.response = {
             'body': '',
+            'sleep': 0,
         }
 
     @asyncio.coroutine

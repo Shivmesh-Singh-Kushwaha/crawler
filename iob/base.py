@@ -39,22 +39,25 @@ class Crawler(object):
     def perform_request(self, req):
         logging.debug('Requesting {}'.format(req.url))
         try:
-            io_res = yield from aiohttp.request('get', req.url)
+            io_res = yield from asyncio.wait_for(aiohttp.request('get', req.url), req.timeout)
         except Exception as ex:
-            logging.error('', exc_info=ex)
+            self.process_failed_request(req, ex)
         else:
             try:
                 body = yield from io_res.text()
             except Exception as ex:
-                logging.error('', exc_info=ex)
-                body = ''
-            res = Response(
-                body=body,
-            )
-            if req.callback:
-                req.callback(req, res)
-            elif req.tag and req.tag in self._handlers:
-                self._handlers[req.tag](req, res)
+                self.process_failed_request(req, ex)
+            else:
+                res = Response(
+                    body=body,
+                )
+                if req.callback:
+                    req.callback(req, res)
+                elif req.tag and req.tag in self._handlers:
+                    self._handlers[req.tag](req, res)
+
+    def process_failed_request(self, req, exc):
+        logging.error('', exc_info=ex)
 
     def register_handlers(self):
         self._handlers = {}

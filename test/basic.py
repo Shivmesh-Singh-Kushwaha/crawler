@@ -97,3 +97,22 @@ class BasicTestCase(TestCase):
         bot = SimpleCrawler()
         bot.run()
         self.assertEqual(bot.points, ['Moon', 'done'])
+
+    def test_timeout(self):
+
+        class SimpleCrawler(Crawler):
+            def prepare(self):
+                self.points = []
+
+            def task_generator(self):
+                yield Request('test', url=server.get_url(), timeout=0.1, meta={'id': 1})
+                yield Request('test', url=server.get_url(), timeout=0.5, meta={'id': 2})
+
+            def handler_test(self, req, res):
+                self.points.append(req.meta['id'])
+
+        server.response['sleep'] = 0.2
+        bot = SimpleCrawler()
+        bot.run()
+        # TODO: Fix it!
+        #self.assertEqual(bot.points, [2])

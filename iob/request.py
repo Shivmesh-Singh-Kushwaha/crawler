@@ -2,7 +2,7 @@ from iob.error import RequestConfigurationError
 
 
 class Request(object):
-    def __init__(self, tag=None, url=None, callback=None, meta=None):
+    def __init__(self, tag=None, url=None, callback=None, meta=None, timeout=10):
         self.url = url
         if tag is not None and callback is not None:
             raise RequestConfigurationError('Only one of tag and callback arguments '\
@@ -13,6 +13,7 @@ class Request(object):
             self.meta = {}
         else:
             self.meta = meta
+        self.timeout=timeout
 
 
 class SleepTask(object):
