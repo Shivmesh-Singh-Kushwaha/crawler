@@ -2,7 +2,10 @@ language: python
 python:
   - "3.4"
 install:
-  - pip install runscript coverage coveralls
+  - pip install runscript
+  - pip install coverage
+  - pip install coveralls
+  - pip install flake8
   - python setup.py develop
 script:
   - flake8 iob test
