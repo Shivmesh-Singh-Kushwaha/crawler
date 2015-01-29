@@ -7,12 +7,13 @@ version = '0.0.1'
 setup(
     name = 'iob',
     version = version,
-    description = 'Site Scraping Framework',
+    description = 'Site Scraping Framework based on py3 asyncio',
     author = 'Gregory Petukhov',
     author_email = 'lorien@lorien.name',
-
+    install_requires = [
+        'aiohttp',
+    ],
     packages = find_packages(),
-
     license = "MIT",
     classifiers = (
         'Programming Language :: Python',
