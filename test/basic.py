@@ -103,6 +103,7 @@ class BasicTestCase(TestCase):
         class SimpleCrawler(Crawler):
             def prepare(self):
                 self.points = []
+                self.errors = []
 
             def task_generator(self):
                 yield Request('test', url=server.get_url(), timeout=0.1,
@@ -113,8 +114,12 @@ class BasicTestCase(TestCase):
             def handler_test(self, req, res):
                 self.points.append(req.meta['id'])
 
+            def process_failed_request(self, req, ex):
+                super(SimpleCrawler, self).process_failed_request(req, ex)
+                self.errors.append(req.meta['id'])
+
         server.response['sleep'] = 0.2
         bot = SimpleCrawler()
         bot.run()
-        # TODO: Fix it!
-        # self.assertEqual(bot.points, [2])
+        self.assertEqual(bot.points, [2])
+        self.assertEqual(bot.errors, [1])

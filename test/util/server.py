@@ -25,6 +25,7 @@ class DebugServer(object):
 
     @asyncio.coroutine
     def handler(self, request):
+        yield from asyncio.sleep(self.response['sleep'], loop=self.app.loop)
         return web.Response(body=self.response['body'].encode('utf-8'))
 
     @asyncio.coroutine
