@@ -102,7 +102,7 @@ class Crawler(object):
                     if (not len(self._workers) and
                             not self._task_queue.qsize()):
                         self._main_loop_enabled = False
-                yield from asyncio.sleep(0.5)
+                yield from asyncio.sleep(0.05)
         finally:
             worker_man_future.cancel()
         self.shutdown()
