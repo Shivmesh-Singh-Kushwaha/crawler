@@ -8,7 +8,7 @@ from iob.request import Request, SleepTask
 from iob.error import UnknownTaskType
 
 
-class BasicTestCase(TestCase):
+class TaskGeneratorTestCase(TestCase):
     def setUp(self):
         server.reset()
 

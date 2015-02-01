@@ -11,6 +11,8 @@ TEST_LIST = (
     'test.basic',
     'test.request',
     'test.task_generator',
+    'test.handler',
+    'test.response',
 )
 
 def setup_arg_parser(parser):

@@ -9,5 +9,8 @@ class Response(object):
         self.body = body
         self.url = url
 
-    def absolute_url(self, url):
-        return urljoin(self.url, url)
+    def absolute_url(self, url=None):
+        if url is None:
+            return self.url
+        else:
+            return urljoin(self.url, url)

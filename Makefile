@@ -10,6 +10,6 @@ test:
 coverage:
 	coverage erase
 	coverage run --source=iob -m runscript.cli test
-	coverage report
+	coverage report -m
 
 .PHONY: all build venv flake test vtest testloop cov clean doc
