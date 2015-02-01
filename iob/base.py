@@ -41,7 +41,7 @@ class Crawler(object):
 
     @asyncio.coroutine
     def perform_request(self, req):
-        logging.debug('Requesting {}'.format(req.url))
+        logging.debug('GET {}'.format(req.url))
         try:
             io_res = yield from asyncio.wait_for(
                 aiohttp.request('get', req.url), req.timeout)
