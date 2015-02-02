@@ -2,7 +2,7 @@
 from unittest import TestCase
 
 from test.util.server import server
-from iob import Crawler, Request, Response
+from iob import Response
 
 
 class ResponseTestCase(TestCase):
@@ -15,5 +15,7 @@ class ResponseTestCase(TestCase):
         self.assertEquals('http://example.com/', res.absolute_url('/'))
         self.assertEquals('http://example.com', res.absolute_url())
         self.assertEquals('http://example.com/foo', res.absolute_url('/foo'))
-        self.assertEquals('http://example.com/foo?1=2', res.absolute_url('/foo?1=2'))
-        self.assertEquals('http://domain.com/foo', res.absolute_url('http://domain.com/foo'))
+        self.assertEquals('http://example.com/foo?1=2',
+                          res.absolute_url('/foo?1=2'))
+        self.assertEquals('http://domain.com/foo',
+                          res.absolute_url('http://domain.com/foo'))
