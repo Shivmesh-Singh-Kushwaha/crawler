@@ -1,13 +1,22 @@
 # coding: utf-8
 from unittest import TestCase
+from test_server import TestServer
 
-from test.util.server import server
 from iob import Crawler, Request
 
 
 class BasicTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.server = TestServer()
+        cls.server.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.stop()
+
     def setUp(self):
-        server.reset()
+        self.server.reset()
 
     def test_single_request(self):
 
@@ -18,10 +27,10 @@ class BasicTestCase(TestCase):
                 self.data['response'] = res.body
 
         token = 'Python'
-        server.response['body'] = token
+        self.server.response['get'] = token
 
         bot = SimpleCrawler()
-        bot.add_task(Request('test', url=server.get_url()))
+        bot.add_task(Request('test', url=self.server.get_url()))
         bot.run()
         self.assertEquals(token, bot.data['response'])
 
@@ -32,6 +41,8 @@ class BasicTestCase(TestCase):
         If concurrency=1 then logged numbers will contain only 0 or 1
         If concurrency=10 then logged numbers should contain 9 or 10
         """
+
+        server = self.server
 
         class SimpleCrawler(Crawler):
             def prepare(self):
@@ -62,6 +73,8 @@ class BasicTestCase(TestCase):
 
     def test_prepare_method(self):
 
+        server = self.server
+
         class SimpleCrawler(Crawler):
             def prepare(self):
                 self._urls_todo = [server.get_url()] * 10
@@ -80,6 +93,8 @@ class BasicTestCase(TestCase):
 
     def test_shutdown_method(self):
 
+        server = self.server
+
         class SimpleCrawler(Crawler):
             def prepare(self):
                 self.points = []
@@ -93,12 +108,14 @@ class BasicTestCase(TestCase):
             def handler_test(self, req, res):
                 self.points.append(res.body)
 
-        server.response['body'] = 'Moon'
+        self.server.response['get'] = 'Moon'
         bot = SimpleCrawler()
         bot.run()
         self.assertEqual(bot.points, ['Moon', 'done'])
 
     def test_timeout(self):
+
+        server = self.server
 
         class SimpleCrawler(Crawler):
             def prepare(self):
@@ -118,7 +135,7 @@ class BasicTestCase(TestCase):
                 super(SimpleCrawler, self).process_failed_request(req, ex)
                 self.errors.append(req.meta['id'])
 
-        server.response['sleep'] = 0.2
+        self.server.sleep['get'] = 0.2
         bot = SimpleCrawler()
         bot.run()
         self.assertEqual(bot.points, [2])

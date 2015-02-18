@@ -3,8 +3,6 @@
 import unittest
 import sys
 
-from test.util.server import server
-
 TEST_LIST = (
     'test.basic',
     'test.request',
@@ -37,11 +35,7 @@ def main(test_only, **kwargs):
                 suite.addTest(test)
 
     runner = unittest.TextTestRunner()
-
-    server.start()
     result = runner.run(suite)
-    server.stop()
-
     if result.wasSuccessful():
         sys.exit(0)
     else:

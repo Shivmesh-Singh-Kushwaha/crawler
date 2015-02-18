@@ -1,18 +1,29 @@
 # coding: utf-8
 from unittest import TestCase
 import time
+from test_server import TestServer
 
-from test.util.server import server
 from iob import Crawler
 from iob.request import Request, SleepTask
 from iob.error import UnknownTaskType
 
 
 class TaskGeneratorTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.server = TestServer()
+        cls.server.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.stop()
+
     def setUp(self):
-        server.reset()
+        self.server.reset()
 
     def test_simple_task_generator(self):
+
+        server = self.server
 
         class SimpleCrawler(Crawler):
             data = {'count': 0}
@@ -45,6 +56,9 @@ class TaskGeneratorTestCase(TestCase):
         self.assertRaises(ZeroDivisionError, bot.run)
 
     def test_partially_broken_task_generator(self):
+
+        server = self.server
+
         class SimpleCrawler(Crawler):
             def prepare(self):
                 self.points = []
@@ -65,6 +79,8 @@ class TaskGeneratorTestCase(TestCase):
             self.assertEqual(bot.points, ['done'])
 
     def test_sleep_task_from_task_generator(self):
+
+        server = self.server
 
         class SimpleCrawler(Crawler):
             def prepare(self):

@@ -1,12 +1,24 @@
 # coding: utf-8
 from unittest import TestCase
+from test_server import TestServer
 
-from test.util.server import server
 from iob import Crawler, Request
 from iob.error import RequestConfigurationError
 
 
 class RequestTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.server = TestServer()
+        cls.server.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.stop()
+
+    def setUp(self):
+        self.server.reset()
+
     def test_constructor_arguments(self):
         req = Request()
         self.assertEqual(req.tag, None)
@@ -35,6 +47,8 @@ class RequestTestCase(TestCase):
 
     def test_callback_argument(self):
 
+        server = self.server
+
         class SimpleCrawler(Crawler):
             def prepare(self):
                 self.points = []
@@ -50,6 +64,8 @@ class RequestTestCase(TestCase):
         self.assertEqual(bot.points, [1])
 
     def test_callback_and_tag_arguments_conflict(self):
+
+        server = self.server
 
         class SimpleCrawler(Crawler):
             def task_generator(self):

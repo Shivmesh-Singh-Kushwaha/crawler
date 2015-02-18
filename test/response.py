@@ -1,14 +1,10 @@
 # coding: utf-8
 from unittest import TestCase
 
-from test.util.server import server
 from iob import Response
 
 
 class ResponseTestCase(TestCase):
-    def setUp(self):
-        server.reset()
-
     def test_absolute_url(self):
         res = Response(body='', url='http://example.com')
         self.assertEquals('http://example.com', res.absolute_url(''))

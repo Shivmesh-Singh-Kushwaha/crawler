@@ -1,15 +1,26 @@
 # coding: utf-8
 from unittest import TestCase
+from test_server import TestServer
 
-from test.util.server import server
 from iob import Crawler, Request
 
 
 class HandlerTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.server = TestServer()
+        cls.server.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.stop()
+
     def setUp(self):
-        server.reset()
+        self.server.reset()
 
     def test_handler_generator(self):
+
+        server = self.server
 
         class SimpleCrawler(Crawler):
             points = list()
@@ -34,6 +45,8 @@ class HandlerTestCase(TestCase):
         self.assertEquals([1, 2, 3, 3], sorted(bot.points))
 
     def test_handler_simple_function(self):
+
+        server = self.server
 
         class SimpleCrawler(Crawler):
             points = list()
