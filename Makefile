@@ -5,7 +5,7 @@ flake_verbose:
 	flake8 iob test script --show-pep8
 
 test:
-	run test
+	tox
 
 coverage:
 	coverage erase

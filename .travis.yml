@@ -1,14 +1,15 @@
 language: python
+
 python:
   - "3.4"
+
 install:
-  - pip install runscript
-  - pip install coverage
-  - pip install coveralls
-  - pip install flake8
+  - pip install -r requirements_dev.txt
   - python setup.py develop
+
 script:
   - flake8 iob test
   - coverage run --source=iob -m runscript.cli test
+
 after_success:
   coveralls
