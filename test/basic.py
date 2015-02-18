@@ -27,7 +27,7 @@ class BasicTestCase(TestCase):
                 self.data['response'] = res.body
 
         token = 'Python'
-        self.server.response['get'] = token
+        self.server.response['data'] = token
 
         bot = SimpleCrawler()
         bot.add_task(Request('test', url=self.server.get_url()))
@@ -108,7 +108,7 @@ class BasicTestCase(TestCase):
             def handler_test(self, req, res):
                 self.points.append(res.body)
 
-        self.server.response['get'] = 'Moon'
+        self.server.response['data'] = 'Moon'
         bot = SimpleCrawler()
         bot.run()
         self.assertEqual(bot.points, ['Moon', 'done'])
@@ -135,7 +135,7 @@ class BasicTestCase(TestCase):
                 super(SimpleCrawler, self).process_failed_request(req, ex)
                 self.errors.append(req.meta['id'])
 
-        self.server.sleep['get'] = 0.2
+        self.server.response['sleep'] = 0.2
         bot = SimpleCrawler()
         bot.run()
         self.assertEqual(bot.points, [2])
