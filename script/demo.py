@@ -5,6 +5,7 @@ from iob import Crawler, Request
 
 RE_TITLE = re.compile(r'<title>([^<]+)</title>', re.S | re.I)
 
+
 class TestCrawler(Crawler):
     def task_generator(self):
         for host in islice(open('var/domains.txt'), 20):

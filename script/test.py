@@ -2,8 +2,6 @@
 # coding: utf-8
 import unittest
 import sys
-from copy import copy
-import os
 
 from test.util.server import server
 
@@ -14,6 +12,7 @@ TEST_LIST = (
     'test.handler',
     'test.response',
 )
+
 
 def setup_arg_parser(parser):
     parser.add_argument('-t', '--test-only', help='Run only specified tests')
