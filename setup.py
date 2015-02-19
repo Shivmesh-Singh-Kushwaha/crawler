@@ -15,7 +15,7 @@ setup(
     ],
     packages = find_packages(),
     license = "MIT",
-    classifiers = (
+    classifiers = [
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: Implementation :: CPython',
@@ -23,5 +23,5 @@ setup(
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Internet :: WWW/HTTP',
-    ),
+    ],
 )
