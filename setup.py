@@ -2,11 +2,10 @@ from setuptools import setup, find_packages
 import os
 
 ROOT = os.path.dirname(os.path.realpath(__file__))
-version = '0.0.1'
 
 setup(
     name = 'iob',
-    version = version,
+    version = '0.0.1',
     description = 'Site Scraping Framework based on py3 asyncio',
     author = 'Gregory Petukhov',
     author_email = 'lorien@lorien.name',
