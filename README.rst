@@ -2,19 +2,28 @@
 Iob
 ===
 
-.. image:: https://travis-ci.org/lorien/iob.png
+.. image:: https://travis-ci.org/lorien/iob.png?branch=master
     :target: https://travis-ci.org/lorien/iob
 
-.. image:: https://coveralls.io/repos/lorien/iob/badge.svg
-    :target: https://coveralls.io/r/lorien/iob
+.. image:: https://coveralls.io/repos/lorien/iob/badge.svg?branch=master
+    :target: https://coveralls.io/r/lorien/iob?branch=master
 
-Yet another web scraping framewor
+.. image:: https://pypip.in/download/iob/badge.svg?period=month
+    :target: https://pypi.python.org/pypi/iob
+
+.. image:: https://pypip.in/version/iob/badge.svg
+    :target: https://pypi.python.org/pypi/iob
+
+.. image:: https://landscape.io/github/lorien/iob/master/landscape.png
+   :target: https://landscape.io/github/lorien/iob/master
+
+Web scraping framework based on py3 asyncio & aiohttp libraries.
 
 
 Usage Example
 =============
 
-Example::
+.. code:: python
 
     import re
     from itertools import islice
@@ -40,6 +49,14 @@ Example::
 
     bot = TestCrawler(concurrency=10)
     bot.run()
+
+
+Installation
+============
+
+.. code:: bash
+
+    pip install iob
 
 
 Dependencies

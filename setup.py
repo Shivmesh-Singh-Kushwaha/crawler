@@ -7,6 +7,7 @@ setup(
     name = 'iob',
     version = '0.0.1',
     description = 'Site Scraping Framework based on py3 asyncio',
+    long_description = open(os.path.join(ROOT, 'README.rst')).read(),
     author = 'Gregory Petukhov',
     author_email = 'lorien@lorien.name',
     install_requires = [
