@@ -8,15 +8,6 @@ Crawler
 .. image:: https://coveralls.io/repos/lorien/crawler/badge.svg?branch=master
     :target: https://coveralls.io/r/lorien/crawler?branch=master
 
-.. image:: https://pypip.in/download/crawler/badge.svg?period=month
-    :target: https://pypi.python.org/pypi/crawler
-
-.. image:: https://pypip.in/version/crawler/badge.svg
-    :target: https://pypi.python.org/pypi/crawler
-
-.. image:: https://landscape.io/github/lorien/crawler/master/landscape.png
-   :target: https://landscape.io/github/lorien/crawler/master
-
 Web scraping framework based on py3 asyncio & aiohttp libraries.
 
 
