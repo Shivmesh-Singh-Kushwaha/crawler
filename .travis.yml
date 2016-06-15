@@ -8,8 +8,8 @@ install:
   - python setup.py develop
 
 script:
-  - flake8 iob test
-  - coverage run --source=iob -m runscript.cli test
+  - flake8 crawler test
+  - coverage run --source=crawler -m runscript.cli test
 
 after_success:
   coveralls

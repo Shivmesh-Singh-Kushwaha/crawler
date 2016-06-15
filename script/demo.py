@@ -1,7 +1,7 @@
 import re
 from itertools import islice
 
-from iob import Crawler, Request
+from crawler import Crawler, Request
 
 RE_TITLE = re.compile(r'<title>([^<]+)</title>', re.S | re.I)
 

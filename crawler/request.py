@@ -1,4 +1,4 @@
-from iob.error import RequestConfigurationError
+from crawler.error import RequestConfigurationError
 
 
 __all__ = ('Request', 'SleepTask')

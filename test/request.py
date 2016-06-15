@@ -2,8 +2,8 @@
 from unittest import TestCase
 from test_server import TestServer
 
-from iob import Crawler, Request
-from iob.error import RequestConfigurationError
+from crawler import Crawler, Request
+from crawler.error import RequestConfigurationError
 
 
 class RequestTestCase(TestCase):

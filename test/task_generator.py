@@ -3,9 +3,9 @@ from unittest import TestCase
 import time
 from test_server import TestServer
 
-from iob import Crawler
-from iob.request import Request, SleepTask
-from iob.error import UnknownTaskType
+from crawler import Crawler
+from crawler.request import Request, SleepTask
+from crawler.error import UnknownTaskType
 
 
 class TaskGeneratorTestCase(TestCase):

@@ -4,9 +4,9 @@ import os
 ROOT = os.path.dirname(os.path.realpath(__file__))
 
 setup(
-    name = 'iob',
+    name = 'crawler',
     version = '0.0.2',
-    description = 'Site Scraping Framework based on py3 asyncio',
+    description = 'Web Scraping Framework based on py3 asyncio',
     long_description = open(os.path.join(ROOT, 'README.rst')).read(),
     author = 'Gregory Petukhov',
     author_email = 'lorien@lorien.name',

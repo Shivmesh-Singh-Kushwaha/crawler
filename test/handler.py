@@ -2,7 +2,7 @@
 from unittest import TestCase
 from test_server import TestServer
 
-from iob import Crawler, Request
+from crawler import Crawler, Request
 
 
 class HandlerTestCase(TestCase):

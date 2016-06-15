@@ -1,17 +1,17 @@
-class IobError(Exception):
+class CrawlerError(Exception):
     """
-    Base exception class for all iob-related exceptions.
+    Base exception class for all crawler-related exceptions.
     """
 
 
-class UnknownTaskType(IobError):
+class UnknownTaskType(CrawlerError):
     """
     Raised when Iob does not know what to do
     with some objects received from generator.
     """
 
 
-class RequestConfigurationError(IobError):
+class RequestConfigurationError(CrawlerError):
     """
     Raised when Request object is instantiating with
     invalid parameters.

@@ -10,7 +10,7 @@ from .error import UnknownTaskType
 __all__ = ('Crawler',)
 
 
-logger = logging.getLogger('iob.base')
+logger = logging.getLogger('crawler.base')
 
 
 class Crawler(object):

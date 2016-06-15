@@ -1,15 +1,17 @@
+.PHONY: all flake flake_verbose test coverage clean upload
+
 flake:
-	flake8 iob test script
+	flake8 crawler test script
 
 flake_verbose:
-	flake8 iob test script --show-pep8
+	flake8 crawler test script --show-pep8
 
 test:
 	tox
 
 coverage:
 	coverage erase
-	coverage run --source=iob -m runscript.cli test
+	coverage run --source=crawler -m runscript.cli test
 	coverage report -m
 
 clean:
@@ -18,5 +20,3 @@ clean:
 
 upload:
 	python setup.py sdist upload
-
-.PHONY: all build venv flake test vtest testloop cov clean doc

@@ -1,21 +1,21 @@
-===
-Iob
-===
+=======
+Crawler
+=======
 
-.. image:: https://travis-ci.org/lorien/iob.png?branch=master
-    :target: https://travis-ci.org/lorien/iob
+.. image:: https://travis-ci.org/lorien/crawler.png?branch=master
+    :target: https://travis-ci.org/lorien/crawler
 
-.. image:: https://coveralls.io/repos/lorien/iob/badge.svg?branch=master
-    :target: https://coveralls.io/r/lorien/iob?branch=master
+.. image:: https://coveralls.io/repos/lorien/crawler/badge.svg?branch=master
+    :target: https://coveralls.io/r/lorien/crawler?branch=master
 
-.. image:: https://pypip.in/download/iob/badge.svg?period=month
-    :target: https://pypi.python.org/pypi/iob
+.. image:: https://pypip.in/download/crawler/badge.svg?period=month
+    :target: https://pypi.python.org/pypi/crawler
 
-.. image:: https://pypip.in/version/iob/badge.svg
-    :target: https://pypi.python.org/pypi/iob
+.. image:: https://pypip.in/version/crawler/badge.svg
+    :target: https://pypi.python.org/pypi/crawler
 
-.. image:: https://landscape.io/github/lorien/iob/master/landscape.png
-   :target: https://landscape.io/github/lorien/iob/master
+.. image:: https://landscape.io/github/lorien/crawler/master/landscape.png
+   :target: https://landscape.io/github/lorien/crawler/master
 
 Web scraping framework based on py3 asyncio & aiohttp libraries.
 
@@ -28,7 +28,7 @@ Usage Example
     import re
     from itertools import islice
 
-    from iob import Crawler, Request
+    from crawler import Crawler, Request
 
     RE_TITLE = re.compile(r'<title>([^<]+)</title>', re.S | re.I)
 
@@ -56,7 +56,7 @@ Installation
 
 .. code:: bash
 
-    pip install iob
+    pip install crawler
 
 
 Dependencies

@@ -1,7 +1,7 @@
 # coding: utf-8
 from unittest import TestCase
 
-from iob import Response
+from crawler import Response
 
 
 class ResponseTestCase(TestCase):
