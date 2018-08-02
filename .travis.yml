@@ -1,15 +1,10 @@
 language: python
 
 python:
-  - "3.4"
-
-install:
-  - pip install -r requirements_dev.txt
-  - python setup.py develop
+  - "3.5"
 
 script:
-  - flake8 crawler test
-  - coverage run --source=crawler -m runscript.cli test
+  - tox
 
 after_success:
   coveralls

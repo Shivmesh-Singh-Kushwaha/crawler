@@ -6,8 +6,9 @@ ROOT = os.path.dirname(os.path.realpath(__file__))
 setup(
     name = 'crawler',
     version = '0.0.2',
-    description = 'Web Scraping Framework based on py3 asyncio',
+    description = 'Web Scraping Framework based on asyncio',
     long_description = open(os.path.join(ROOT, 'README.rst')).read(),
+    url='https://github.com/lorien/crawler',
     author = 'Gregory Petukhov',
     author_email = 'lorien@lorien.name',
     install_requires = [
