@@ -5,8 +5,9 @@ python: 3.5
 matrix:
   include:
     - env: TOX_ENV=py35
+      python: 3.5
     - env: TOX_ENV=py36
-    - env: TOX_ENV=py37
+      python: 3.6
   exclude:
     - python: 3.5 # hack to exclude default no-env travis job
 
