@@ -59,21 +59,15 @@ class Crawler(object):
                     # TODO: use effective URL (in case of redirect)
                     url=req.url,
                 )
-                handler = None
-                if req.callback:
-                    handler = req.callback(req, res)
-                elif req.tag and req.tag in self._handlers:
-                    handler = self._handlers[req.tag]
-
-                if handler is not None:
-                    # Call handler with arguments: request, response
-                    # Handler result could be generator or simple function
-                    # If handler is simple function then it should return None
-                    hdl_result = handler(req, res)
-                    if hdl_result is not None:
-                        for item in hdl_result:
-                            assert isinstance(item, Request)
-                            await self._task_queue.put(item)
+                handler = self._handlers[req.tag]
+                # Call handler with arguments: request, response
+                # Handler result could be generator or simple function
+                # If handler is simple function then it must return None
+                hdl_result = handler(req, res)
+                if hdl_result is not None:
+                    for item in hdl_result:
+                        assert isinstance(item, Request)
+                        await self._task_queue.put(item)
 
     def process_failed_request(self, req, ex):
         logging.error('', exc_info=ex)

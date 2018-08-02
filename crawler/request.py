@@ -5,13 +5,10 @@ __all__ = ('Request', 'SleepTask')
 
 
 class Request(object):
-    def __init__(self, tag=None, url=None, callback=None, meta=None,
-                 timeout=10):
+    def __init__(self, tag=None, url=None, meta=None, timeout=10):
         self.url = url
-        if tag is not None and callback is not None:
-            raise RequestConfigurationError('Only one of tag and callback '
-                                            'arguments should be specified')
-        self.callback = callback
+        if tag is None:
+            raise RequestConfigurationError('Tag parameter is required')
         self.tag = tag
         if meta is None:
             self.meta = {}
