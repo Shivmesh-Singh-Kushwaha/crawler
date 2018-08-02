@@ -24,13 +24,12 @@ class Crawler(object):
     def run(self):
         self._loop.run_until_complete(self.main_loop())
 
-    @asyncio.coroutine
-    def task_generator_processor(self):
+    async def task_generator_processor(self):
         for task in self.task_generator():
             if isinstance(task, Request):
-                yield from self._task_queue.put(task)
+                await self._task_queue.put(task)
             elif isinstance(task, SleepTask):
-                yield from asyncio.sleep(task.delay)
+                await asyncio.sleep(task.delay)
             else:
                 raise UnknownTaskType('Unknown task got from task_generator: '
                                       '%s' % task)
@@ -39,17 +38,19 @@ class Crawler(object):
         # blocking!
         list(self._task_queue.put(task))
 
-    @asyncio.coroutine
-    def perform_request(self, req):
+    async def perform_request(self, req):
         logging.debug('GET {}'.format(req.url))
         try:
-            io_res = yield from asyncio.wait_for(
-                aiohttp.request('get', req.url), req.timeout)
+            async with aiohttp.ClientSession() as session:
+                io_res = await asyncio.wait_for(
+                    session.request('get', req.url),
+                    req.timeout
+                )
         except Exception as ex:
             self.process_failed_request(req, ex)
         else:
             try:
-                body = yield from io_res.text()
+                body = await io_res.text()
             except Exception as ex:
                 self.process_failed_request(req, ex)
             else:
@@ -72,7 +73,7 @@ class Crawler(object):
                     if hdl_result is not None:
                         for item in hdl_result:
                             assert isinstance(item, Request)
-                            yield from self._task_queue.put(item)
+                            await self._task_queue.put(item)
 
     def process_failed_request(self, req, ex):
         logging.error('', exc_info=ex)
@@ -90,17 +91,15 @@ class Crawler(object):
         self._free_workers.release()
         del self._workers[id(worker)]
 
-    @asyncio.coroutine
-    def worker_manager(self):
+    async def worker_manager(self):
         while True:
-            task = yield from self._task_queue.get()
-            yield from self._free_workers.acquire()
+            task = await self._task_queue.get()
+            await self._free_workers.acquire()
             worker = self._loop.create_task(self.perform_request(task))
             worker.add_done_callback(self.request_completed_callback)
             self._workers[id(worker)] = worker
 
-    @asyncio.coroutine
-    def main_loop(self):
+    async def main_loop(self):
         self.prepare()
         self.register_handlers()
         task_gen_future = self._loop.create_task(
@@ -115,7 +114,7 @@ class Crawler(object):
                     if (not len(self._workers) and
                             not self._task_queue.qsize()):
                         self._main_loop_enabled = False
-                yield from asyncio.sleep(0.05)
+                await asyncio.sleep(0.05)
         finally:
             worker_man_future.cancel()
         self.shutdown()

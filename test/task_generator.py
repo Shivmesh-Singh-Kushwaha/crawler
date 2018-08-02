@@ -6,21 +6,10 @@ from test_server import TestServer
 from crawler import Crawler
 from crawler.request import Request, SleepTask
 from crawler.error import UnknownTaskType
+from .util import BaseTestCase
 
 
-class TaskGeneratorTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.server = TestServer()
-        cls.server.start()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.server.stop()
-
-    def setUp(self):
-        self.server.reset()
-
+class TaskGeneratorTestCase(BaseTestCase, TestCase):
     def test_simple_task_generator(self):
 
         server = self.server

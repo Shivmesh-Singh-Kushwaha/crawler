@@ -3,21 +3,9 @@ from unittest import TestCase
 from test_server import TestServer
 
 from crawler import Crawler, Request
+from .util import BaseTestCase
 
-
-class BasicTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.server = TestServer()
-        cls.server.start()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.server.stop()
-
-    def setUp(self):
-        self.server.reset()
-
+class BasicTestCase(BaseTestCase, TestCase):
     def test_single_request(self):
 
         class SimpleCrawler(Crawler):

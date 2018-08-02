@@ -4,21 +4,10 @@ from test_server import TestServer
 
 from crawler import Crawler, Request
 from crawler.error import RequestConfigurationError
+from .util import BaseTestCase
 
 
-class RequestTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.server = TestServer()
-        cls.server.start()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.server.stop()
-
-    def setUp(self):
-        self.server.reset()
-
+class RequestTestCase(BaseTestCase, TestCase):
     def test_constructor_arguments(self):
         req = Request()
         self.assertEqual(req.tag, None)
