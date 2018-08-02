@@ -1,10 +1,17 @@
 language: python
 
-python:
-  - "3.5"
+python: 3.5
+
+matrix:
+  include:
+    - env: TOX_ENV=py35
+    - env: TOX_ENV=py36
+    - env: TOX_ENV=py37
+  exclude:
+    - python: 3.5 # hack to exclude default no-env travis job
 
 script:
-  - tox
+  - tox -e $TOX_ENV
 
 after_success:
   coveralls
