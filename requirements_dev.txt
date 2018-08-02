@@ -4,3 +4,4 @@ test_server
 coverage
 coveralls
 flake8
+pytest
