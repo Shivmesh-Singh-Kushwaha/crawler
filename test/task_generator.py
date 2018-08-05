@@ -2,9 +2,10 @@
 from unittest import TestCase
 import time
 from test_server import TestServer
+import asyncio
 
 from crawler import Crawler
-from crawler.request import Request, SleepTask
+from crawler.request import Request
 from crawler.error import UnknownTaskType
 from .util import BaseTestCase
 
@@ -43,73 +44,6 @@ class TaskGeneratorTestCase(BaseTestCase, TestCase):
 
         bot = SimpleCrawler()
         self.assertRaises(ZeroDivisionError, bot.run)
-
-    def test_partially_broken_task_generator(self):
-        """
-        task generator yield network request
-        then it sleeps for 0.5 seconds
-        that time should be enough to process first network request
-        """
-
-        server = self.server
-
-        class SimpleCrawler(Crawler):
-            def init_hook(self):
-                self.points = []
-
-            def task_generator(self):
-                yield Request('test', url=server.get_url())
-                yield SleepTask(0.5)
-                1/0
-
-            def handler_test(self, req, res):
-                self.points.append('done')
-
-        bot = SimpleCrawler()
-        try:
-            bot.run()
-        except ZeroDivisionError:
-            self.assertEqual(bot.points, ['done'])
-        else:
-            # Should not happen
-            assert False
-
-    def test_sleep_task_from_task_generator(self):
-
-        server = self.server
-
-        class SimpleCrawler(Crawler):
-            def init_hook(self):
-                self.points = []
-
-            def task_generator(self):
-                yield Request('test', url=server.get_url())
-                yield Request('test', url=server.get_url())
-
-            def handler_test(self, req, res):
-                self.points.append(time.time())
-
-        bot = SimpleCrawler()
-        bot.run()
-        self.assertTrue(2, len(bot.points))
-        self.assertTrue(abs(bot.points[0] - bot.points[1]) < 1)
-
-        class SimpleCrawler(Crawler):
-            def init_hook(self):
-                self.points = []
-
-            def task_generator(self):
-                yield Request('test', url=server.get_url())
-                yield SleepTask(1.1)
-                yield Request('test', url=server.get_url())
-
-            def handler_test(self, req, res):
-                self.points.append(time.time())
-
-        bot = SimpleCrawler()
-        bot.run()
-        self.assertTrue(2, len(bot.points))
-        self.assertTrue(abs(bot.points[0] - bot.points[1]) > 1)
 
     def test_unknown_task_type_error(self):
         class SimpleCrawler(Crawler):

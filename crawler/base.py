@@ -6,7 +6,7 @@ from queue import Empty
 import multiprocessing
 from threading import Thread
 
-from .request import Request, SleepTask
+from .request import Request
 from .response import Response
 from .error import UnknownTaskType
 
@@ -42,8 +42,6 @@ class Crawler(object):
             print('TASK', task)
             if isinstance(task, Request):
                 await self._request_queue.async_q.put(task)
-            elif isinstance(task, SleepTask):
-                await asyncio.sleep(task.delay)
             else:
                 raise UnknownTaskType('Unknown task got from task_generator: '
                                       '%s' % task)

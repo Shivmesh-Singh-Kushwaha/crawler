@@ -1,7 +1,7 @@
 from crawler.error import RequestConfigurationError
 
 
-__all__ = ('Request', 'SleepTask')
+__all__ = ('Request',)
 
 
 class Request(object):
@@ -15,9 +15,3 @@ class Request(object):
         else:
             self.meta = meta
         self.timeout = timeout
-
-
-class SleepTask(object):
-    def __init__(self, delay):
-        assert isinstance(delay, (int, float))
-        self.delay = delay
