@@ -14,3 +14,6 @@ class Response(object):
             return self.url
         else:
             return urljoin(self.url, url)
+
+    def text(self):
+        return self.body.decode('utf-8')

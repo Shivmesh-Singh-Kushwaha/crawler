@@ -14,7 +14,7 @@ class BasicTestCase(BaseTestCase, TestCase):
             def handler_test(self, req, res):
                 self.data['response'] = res.body
 
-        token = 'Python'
+        token = b'Python'
         self.server.response['data'] = token
 
         bot = SimpleCrawler()
@@ -22,18 +22,18 @@ class BasicTestCase(BaseTestCase, TestCase):
         bot.run()
         self.assertEquals(token, bot.data['response'])
 
-    def test_concurrency(self):
+    def test_num_network_threads(self):
         """
         The idea of that test that each response handler should
-        logs the number of active network operations.
-        If concurrency=1 then logged numbers will contain only 0 or 1
-        If concurrency=10 then logged numbers should contain 9 or 10
+        log number of active network threads.
+        If num_network_threads=1 then logged numbers will contain only 0 or 1
+        If num_network_threads=10 then logged numbers should contain 9 or 10
         """
 
         server = self.server
 
         class SimpleCrawler(Crawler):
-            def prepare(self):
+            def init_hook(self):
                 self.counters = []
 
             def task_generator(self):
@@ -41,20 +41,20 @@ class BasicTestCase(BaseTestCase, TestCase):
                     yield Request('test', url=server.get_url())
 
             def handler_test(self, req, res):
-                self.counters.append(len(self._workers))
+                self.counters.append(len(self._network_threads))
 
-        bot = SimpleCrawler(concurrency=1)
+        bot = SimpleCrawler(num_network_threads=1)
         bot.run()
         self.assertEqual(len(bot.counters), 10)
         self.assertTrue(all(x in [0, 1] for x in bot.counters))
 
-        bot = SimpleCrawler(concurrency=4)
+        bot = SimpleCrawler(num_network_threads=4)
         bot.run()
         self.assertEqual(len(bot.counters), 10)
         self.assertTrue(any(x in [3, 4] for x in bot.counters))
         self.assertFalse(any(x in [9, 10] for x in bot.counters))
 
-        bot = SimpleCrawler(concurrency=10)
+        bot = SimpleCrawler(num_network_threads=10)
         bot.run()
         self.assertEqual(len(bot.counters), 10)
         self.assertTrue(any(x in [9, 10] for x in bot.counters))
@@ -64,7 +64,7 @@ class BasicTestCase(BaseTestCase, TestCase):
         server = self.server
 
         class SimpleCrawler(Crawler):
-            def prepare(self):
+            def init_hook(self):
                 self._urls_todo = [server.get_url()] * 10
                 self.counter = 0
 
@@ -79,15 +79,15 @@ class BasicTestCase(BaseTestCase, TestCase):
         bot.run()
         self.assertEqual(bot.counter, 10)
 
-    def test_shutdown_method(self):
+    def test_shutdown_hook(self):
 
         server = self.server
 
         class SimpleCrawler(Crawler):
-            def prepare(self):
+            def init_hook(self):
                 self.points = []
 
-            def shutdown(self):
+            def shutdown_hook(self):
                 self.points.append('done')
 
             def task_generator(self):
@@ -99,14 +99,14 @@ class BasicTestCase(BaseTestCase, TestCase):
         self.server.response['data'] = 'Moon'
         bot = SimpleCrawler()
         bot.run()
-        self.assertEqual(bot.points, ['Moon', 'done'])
+        self.assertEqual(bot.points, [b'Moon', 'done'])
 
     def test_timeout(self):
 
         server = self.server
 
         class SimpleCrawler(Crawler):
-            def prepare(self):
+            def init_hook(self):
                 self.points = []
                 self.errors = []
 

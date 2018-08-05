@@ -45,11 +45,16 @@ class TaskGeneratorTestCase(BaseTestCase, TestCase):
         self.assertRaises(ZeroDivisionError, bot.run)
 
     def test_partially_broken_task_generator(self):
+        """
+        task generator yield network request
+        then it sleeps for 0.5 seconds
+        that time should be enough to process first network request
+        """
 
         server = self.server
 
         class SimpleCrawler(Crawler):
-            def prepare(self):
+            def init_hook(self):
                 self.points = []
 
             def task_generator(self):
@@ -61,18 +66,20 @@ class TaskGeneratorTestCase(BaseTestCase, TestCase):
                 self.points.append('done')
 
         bot = SimpleCrawler()
-        self.assertRaises(ZeroDivisionError, bot.run)
         try:
             bot.run()
-        except Exception:
+        except ZeroDivisionError:
             self.assertEqual(bot.points, ['done'])
+        else:
+            # Should not happen
+            assert False
 
     def test_sleep_task_from_task_generator(self):
 
         server = self.server
 
         class SimpleCrawler(Crawler):
-            def prepare(self):
+            def init_hook(self):
                 self.points = []
 
             def task_generator(self):
@@ -88,7 +95,7 @@ class TaskGeneratorTestCase(BaseTestCase, TestCase):
         self.assertTrue(abs(bot.points[0] - bot.points[1]) < 1)
 
         class SimpleCrawler(Crawler):
-            def prepare(self):
+            def init_hook(self):
                 self.points = []
 
             def task_generator(self):

@@ -1,6 +1,10 @@
 import aiohttp
 import asyncio
 import logging
+import janus
+from queue import Empty
+import multiprocessing
+from threading import Thread
 
 from .request import Request, SleepTask
 from .response import Response
@@ -8,26 +12,36 @@ from .error import UnknownTaskType
 
 
 __all__ = ('Crawler',)
-
-
 logger = logging.getLogger('crawler.base')
 
 
 class Crawler(object):
-    def __init__(self, concurrency=10):
+    def __init__(self, num_network_threads=10):
         self._loop = asyncio.get_event_loop()
-        self._task_queue = asyncio.Queue(maxsize=concurrency * 2)
-        self._concurrency = concurrency
-        self._free_workers = asyncio.Semaphore(value=concurrency)
-        self._workers = {}
+        self._num_network_threads = num_network_threads
+        self._request_queue = janus.Queue(loop=self._loop, maxsize=self._num_network_threads)
+        # Number of parser should be num of cores divided by 2 because of hyperthreading
+        self._num_parsers = max(1, multiprocessing.cpu_count() // 2)
+        self._response_queue = janus.Queue(loop=self._loop, maxsize=self._num_parsers)
+        self._free_network_threads = asyncio.Semaphore(value=self._num_network_threads)
+        self._network_threads = {}
+        self._parser_errors = janus.Queue(loop=self._loop)
+        self.init_hook()
+
+    def init_hook(self):
+        pass
+
+    def shutdown_hook(self):
+        pass
 
     def run(self):
         self._loop.run_until_complete(self.main_loop())
 
     async def task_generator_processor(self):
         for task in self.task_generator():
+            print('TASK', task)
             if isinstance(task, Request):
-                await self._task_queue.put(task)
+                await self._request_queue.async_q.put(task)
             elif isinstance(task, SleepTask):
                 await asyncio.sleep(task.delay)
             else:
@@ -35,39 +49,39 @@ class Crawler(object):
                                       '%s' % task)
 
     def add_task(self, task):
-        # blocking!
-        list(self._task_queue.put(task))
+        self._request_queue.sync_q.put(task)
 
     async def perform_request(self, req):
         logging.debug('GET {}'.format(req.url))
-        try:
-            async with aiohttp.ClientSession() as session:
-                io_res = await asyncio.wait_for(
-                    session.request('get', req.url),
-                    req.timeout
-                )
-        except Exception as ex:
-            self.process_failed_request(req, ex)
-        else:
+        async with aiohttp.ClientSession() as session:
             try:
-                body = await io_res.text()
+                    io_res = await asyncio.wait_for(
+                        session.request('get', req.url),
+                        req.timeout
+                    )
             except Exception as ex:
                 self.process_failed_request(req, ex)
             else:
-                res = Response(
-                    body=body,
-                    # TODO: use effective URL (in case of redirect)
-                    url=req.url,
-                )
-                handler = self._handlers[req.tag]
-                # Call handler with arguments: request, response
-                # Handler result could be generator or simple function
-                # If handler is simple function then it must return None
-                hdl_result = handler(req, res)
-                if hdl_result is not None:
-                    for item in hdl_result:
-                        assert isinstance(item, Request)
-                        await self._task_queue.put(item)
+                try:
+                    body = await io_res.read()
+                except Exception as ex:
+                    self.process_failed_request(req, ex)
+                else:
+                    res = Response(
+                        body=body,
+                        # TODO: use effective URL (in case of redirect)
+                        url=req.url,
+                    )
+                    await self._response_queue.async_q.put((req, res))
+                    #handler = self._handlers[req.tag]
+                    ## Call handler with arguments: request, response
+                    ## Handler result could be generator or simple function
+                    ## If handler is simple function then it must return None
+                    #hdl_result = handler(req, res)
+                    #if hdl_result is not None:
+                    #    for item in hdl_result:
+                    #        assert isinstance(item, Request)
+                    #        await self._request_queue.put(item)
 
     def process_failed_request(self, req, ex):
         logging.error('', exc_info=ex)
@@ -82,42 +96,80 @@ class Crawler(object):
                     self._handlers[handler_tag] = thing
 
     def request_completed_callback(self, worker):
-        self._free_workers.release()
-        del self._workers[id(worker)]
+        self._free_network_threads.release()
+        del self._network_threads[id(worker)]
 
-    async def worker_manager(self):
+    async def network_manager(self):
         while True:
-            task = await self._task_queue.get()
-            await self._free_workers.acquire()
+            task = await self._request_queue.async_q.get()
+            await self._free_network_threads.acquire()
             worker = self._loop.create_task(self.perform_request(task))
             worker.add_done_callback(self.request_completed_callback)
-            self._workers[id(worker)] = worker
+            self._network_threads[id(worker)] = worker
+
+    def parser_thread(self):
+        while True:
+            try:
+                req, resp = self._response_queue.sync_q.get()#True, 0.1)
+            except Empty:
+                pass
+            else:
+                handler = self._handlers[req.tag]
+                ## Call handler with arguments: request, response
+                ## Handler result could be generator or simple function
+                ## If handler is simple function then it must return None
+                try:
+                    hdl_result = handler(req, resp)
+                    if hdl_result is not None:
+                        for item in hdl_result:
+                            assert isinstance(item, Request)
+                            self._request_queue.sync_q.put(item)
+                except Exception as ex:
+                    logging.exception('Exception in parser')
+                    self._parser_errors.sync_q.put(ex)
+
+
+    def start_parsers(self):
+        pool = []
+        for _ in range(self._num_parsers):
+            th = Thread(target=self.parser_thread)
+            th.daemon = True
+            th.start()
+            pool.append(th)
+        return pool
+
+    async def errors_monitor(self):
+        ex = await self._parser_errors.async_q.get()
+        if ex:
+            raise ex
+
+    async def shutdown(self):
+        # TODO: stop all processes
+        self._main_loop_enabled = False
 
     async def main_loop(self):
-        self.prepare()
         self.register_handlers()
-        task_gen_future = self._loop.create_task(
+        task_generator_fut = self._loop.create_task(
             self.task_generator_processor())
-        worker_man_future = self._loop.create_task(self.worker_manager())
+        network_manager_future = self._loop.create_task(self.network_manager())
+        pool = self.start_parsers()
         self._main_loop_enabled = True
+        self._loop.create_task(self.errors_monitor())
         try:
             while self._main_loop_enabled:
-                if task_gen_future.done():
-                    if task_gen_future.exception():
-                        raise task_gen_future.exception()
-                    if (not len(self._workers) and
-                            not self._task_queue.qsize()):
+                if task_generator_fut.done():
+                    if task_generator_fut.exception():
+                        raise task_generator_fut.exception()
+                    if (
+                            not len(self._network_threads)
+                            and
+                            not self._request_queue.async_q.qsize()
+                        ):
                         self._main_loop_enabled = False
-                await asyncio.sleep(0.05)
+                await asyncio.sleep(1)#0.05)
         finally:
-            worker_man_future.cancel()
-        self.shutdown()
-
-    def shutdown(self):
-        logger.debug('Work done!')
-
-    def prepare(self):
-        pass
+            network_manager_future.cancel()
+            self.shutdown_hook()
 
     def task_generator(self):
         if False:

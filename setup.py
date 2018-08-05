@@ -12,7 +12,7 @@ setup(
     author = 'Gregory Petukhov',
     author_email = 'lorien@lorien.name',
     install_requires = [
-        'aiohttp',
+        'aiohttp', 'janus',
     ],
     packages = find_packages(),
     license = "MIT",
