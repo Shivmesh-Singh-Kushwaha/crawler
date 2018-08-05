@@ -73,15 +73,6 @@ class Crawler(object):
                         url=req.url,
                     )
                     await self._response_queue.async_q.put((req, res))
-                    #handler = self._handlers[req.tag]
-                    ## Call handler with arguments: request, response
-                    ## Handler result could be generator or simple function
-                    ## If handler is simple function then it must return None
-                    #hdl_result = handler(req, res)
-                    #if hdl_result is not None:
-                    #    for item in hdl_result:
-                    #        assert isinstance(item, Request)
-                    #        await self._request_queue.put(item)
 
     def process_failed_request(self, req, ex):
         logging.error('', exc_info=ex)
@@ -166,7 +157,7 @@ class Crawler(object):
                             not self._request_queue.async_q.qsize()
                         ):
                         self._main_loop_enabled = False
-                await asyncio.sleep(1)#0.05)
+                await asyncio.sleep(0.05)
         finally:
             network_manager_future.cancel()
             self.shutdown_hook()
