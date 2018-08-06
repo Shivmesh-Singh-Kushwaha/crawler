@@ -12,7 +12,7 @@ setup(
     author = 'Gregory Petukhov',
     author_email = 'lorien@lorien.name',
     install_requires = [
-        'aiohttp', 'janus',
+        'pycurl<7.43.0.2',
     ],
     packages = find_packages(),
     license = "MIT",

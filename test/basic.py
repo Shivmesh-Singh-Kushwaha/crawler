@@ -37,26 +37,29 @@ class BasicTestCase(BaseTestCase, TestCase):
                 self.counters = []
 
             def task_generator(self):
-                for x in range(10):
+                for x in range(20):
                     yield Request('test', url=server.get_url())
 
             def handler_test(self, req, res):
-                self.counters.append(len(self._network_threads))
+                self.counters.append(len([
+                    x['active'] for x in self._net_threads.values()
+                ]))
 
         bot = SimpleCrawler(num_network_threads=1)
         bot.run()
-        self.assertEqual(len(bot.counters), 10)
+        self.assertEqual(len(bot.counters), 20)
         self.assertTrue(all(x in [0, 1] for x in bot.counters))
 
         bot = SimpleCrawler(num_network_threads=4)
         bot.run()
-        self.assertEqual(len(bot.counters), 10)
+        self.assertEqual(len(bot.counters), 20)
+        print(bot.counters)
         self.assertTrue(any(x in [3, 4] for x in bot.counters))
         self.assertFalse(any(x in [9, 10] for x in bot.counters))
 
         bot = SimpleCrawler(num_network_threads=10)
         bot.run()
-        self.assertEqual(len(bot.counters), 10)
+        self.assertEqual(len(bot.counters), 20)
         self.assertTrue(any(x in [9, 10] for x in bot.counters))
 
     def test_prepare_method(self):
@@ -113,18 +116,17 @@ class BasicTestCase(BaseTestCase, TestCase):
             def task_generator(self):
                 yield Request('test', url=server.get_url(), timeout=0.1,
                               meta={'id': 1})
-                yield Request('test', url=server.get_url(), timeout=0.5,
+                yield Request('test', url=server.get_url(), timeout=1,
                               meta={'id': 2})
 
             def handler_test(self, req, res):
                 self.points.append(req.meta['id'])
 
-            def process_failed_request(self, req, ex):
-                super(SimpleCrawler, self).process_failed_request(req, ex)
+            def process_rejected_request(self, req, resp, ex):
                 self.errors.append(req.meta['id'])
 
-        self.server.response['sleep'] = 0.2
-        bot = SimpleCrawler()
+        self.server.response['sleep'] = 0.3
+        bot = SimpleCrawler(network_try_limit=1)
         bot.run()
-        self.assertEqual(bot.points, [2])
-        self.assertEqual(bot.errors, [1])
+        self.assertEqual(set(bot.points), set([2]))
+        self.assertEqual(set(bot.errors), set([1]))
