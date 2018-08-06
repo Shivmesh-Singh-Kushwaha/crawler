@@ -8,7 +8,11 @@ Crawler
 .. image:: https://coveralls.io/repos/lorien/crawler/badge.svg?branch=master
     :target: https://coveralls.io/r/lorien/crawler?branch=master
 
-Web scraping framework based on py3 asyncio & aiohttp libraries.
+Main goals of project:
+ * stability
+ * speed
+ * reasonable memory usage
+ * SOCKS proxy support
 
 
 Usage Example
@@ -17,28 +21,26 @@ Usage Example
 .. code:: python
 
     import re
-    from itertools import islice
 
     from crawler import Crawler, Request
 
-    RE_TITLE = re.compile(r'<title>([^<]+)</title>', re.S | re.I)
 
     class TestCrawler(Crawler):
+        re_title = re.compile(r'<title>([^<]+)</title>', re.S | re.I)
+
         def task_generator(self):
-            for host in islice(open('var/domains.txt'), 100):
-                host = host.strip()
-                if host:
-                    yield Request('http://%s/' % host, tag='page')
+            for line in open('var/domains.txt'):
+                host = line.strip()
+                yield Request('page', 'http://%s/' % host)
 
         def handler_page(self, req, res):
-            print('Result of request to {}'.format(req.url))
             try:
-                title = RE_TITLE.search(res.body).group(1)
+                title = self.re_title.search(res.text()).group(1)
             except AttributeError:
                 title = 'N/A'
-            print('Title: {}'.format(title))
+            print('Title of [%s]: %s' % (req.url, title))
 
-    bot = TestCrawler(concurrency=10)
+    bot = TestCrawler(num_network_threads=10)
     bot.run()
 
 
@@ -48,10 +50,3 @@ Installation
 .. code:: bash
 
     pip install crawler
-
-
-Dependencies
-============
-
-* Python>=3.4
-* aiohttp
