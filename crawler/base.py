@@ -10,7 +10,6 @@ from .request import Request
 from .response import Response
 from .error import UnknownTaskType
 from .stat import Stat
-from .trace import request_tracer
 from .curl_transport import CurlTransport, NetworkError
 
 

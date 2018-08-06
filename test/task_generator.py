@@ -2,7 +2,6 @@
 from unittest import TestCase
 import time
 from test_server import TestServer
-import asyncio
 
 from crawler import Crawler
 from crawler.request import Request
