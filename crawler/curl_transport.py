@@ -32,8 +32,17 @@ class CurlTransport(object):
             raise NetworkError(str(ex), ex)
         else:
             resp = Response(
+                code=curl.getinfo(pycurl.HTTP_CODE),
                 url=req.url,
                 body=data.getvalue(),
+                effective_url=curl.getinfo(pycurl.EFFECTIVE_URL),
+                bytes_downloaded=curl.getinfo(pycurl.SIZE_DOWNLOAD),
+                bytes_uploaded=curl.getinfo(pycurl.SIZE_UPLOAD),
+                times={
+                    'name_lookup': curl.getinfo(pycurl.NAMELOOKUP_TIME),
+                    'connect': curl.getinfo(pycurl.CONNECT_TIME),
+                    'total': curl.getinfo(pycurl.TOTAL_TIME),
+                },
             )
             return resp
         finally:

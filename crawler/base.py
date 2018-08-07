@@ -17,6 +17,7 @@ from .api import start_api_server_thread
 __all__ = ('Crawler',)
 logger = logging.getLogger('crawler.base')
 control_logger = logging.getLogger('crawler.control')
+network_logger = logging.getLogger('crawler.network')
 
 
 class Crawler(object):
@@ -47,7 +48,7 @@ class Crawler(object):
             maxsize=self.config['num_parsers'],
         )
         self._fatal_errors = Queue()
-        self._stat = Stat()
+        self.stat = Stat()
         self.network_transport = CurlTransport()
         self._work_allowed = True
         self._resume_event = Event()
@@ -96,35 +97,41 @@ class Crawler(object):
         self._request_queue.put(task)
 
     def worker_network(self):
-        while True:
-            req = self._request_queue.get()
-            if req == 'kill':
-                return
-            #print('GOT NETWORK REQ', req.url)
-            self._net_threads[id(current_thread())]['active'] = True
-            logging.debug('GET %s' % req.url)
-            try:
+        try:
+            while True:
+                req = self._request_queue.get()
+                if req == 'kill':
+                    return
+                #print('GOT NETWORK REQ', req.url)
+                self._net_threads[id(current_thread())]['active'] = True
+                network_logger.debug('GET %s' % req.url)
                 try:
-                    resp = self.network_transport.process_request(req)
-                except NetworkError as ex:
-                    #print('NET ERROR (%s) %s' % (ex, req.url))
-                    req.network_try_count += 1
-                    if req.network_try_count > self.config['network_try_limit']:
-                        self._stat.store(
-                            'network_try_limit', '%s|%s' % (req.url, ex)
-                        )
-                        self.process_rejected_request(req, None, ex)
+                    try:
+                        resp = self.network_transport.process_request(req)
+                    except NetworkError as ex:
+                        self.stat.inc('network:request-error')
+                        self.stat.inc('network:request-error-%s' % req.tag)
+                        #print('NET ERROR (%s) %s' % (ex, req.url))
+                        req.network_try_count += 1
+                        if req.network_try_count > self.config['network_try_limit']:
+                            self.stat.store(
+                                'network_try_rejected', '%s|%s' % (req.url, ex)
+                            )
+                            self.process_rejected_request(req, None, ex)
+                        else:
+                            self._request_queue.put(req)
                     else:
-                        self._request_queue.put(req)
-                except Exception as ex:
-                    #print('UNEXPECTED ERROR (%s) %s' % (ex, req.url))
-                    self._fatal_errors.put(ex)
-                else:
-                    #print('Sending response to queue: %s' % req.url)
-                    self._response_queue.put((req, resp))
-            finally:
-                #print('Finish processing %s' % req.url)
-                self._net_threads[id(current_thread())]['active'] = False
+                        #print('Sending response to queue: %s' % req.url)
+                        self.stat.inc('network:request-ok')
+                        self.stat.inc('network:request-ok-%s' % req.tag)
+                        self.stat.inc('network:bytes_downloaded', resp.bytes_downloaded)
+                        self.stat.inc('network:bytes_uploaded', resp.bytes_uploaded)
+                        self._response_queue.put((req, resp))
+                finally:
+                    #print('Finish processing %s' % req.url)
+                    self._net_threads[id(current_thread())]['active'] = False
+        except Exception as ex:
+            self._fatal_errors.put(ex)
 
 
     def process_rejected_request(self, req, resp, ex):
@@ -140,29 +147,36 @@ class Crawler(object):
                     self._handlers[handler_tag] = thing
 
     def worker_parser(self):
-        while True:
-            task = self._response_queue.get()
-            if task == 'pause':
-                self._parser_threads[id(current_thread())]['paused'] = True
-                self._resume_event.wait()
-                self._parser_threads[id(current_thread())]['paused'] = False
-            elif task == 'kill':
-                return
-            else:
-                req, resp = task
-                handler = self._handlers[req.tag]
-                ## Call handler with arguments: request, response
-                ## Handler result could be generator or simple function
-                ## If handler is simple function then it must return None
-                try:
-                    hdl_result = handler(req, resp)
-                    if hdl_result is not None:
-                        for item in hdl_result:
-                            assert isinstance(item, Request)
-                            self._request_queue.put(item)
-                except Exception as ex:
-                    logging.exception('Exception in parser')
-                    self._fatal_errors.put(ex)
+        try:
+            while True:
+                task = self._response_queue.get()
+                if task == 'pause':
+                    self._parser_threads[id(current_thread())]['paused'] = True
+                    self._resume_event.wait()
+                    self._parser_threads[id(current_thread())]['paused'] = False
+                elif task == 'kill':
+                    return
+                else:
+                    req, resp = task
+                    handler = self._handlers[req.tag]
+                    ## Call handler with arguments: request, response
+                    ## Handler result could be generator or simple function
+                    ## If handler is simple function then it must return None
+                    self.stat.inc('parser:handler-%s' % req.tag)
+                    try:
+                        hdl_result = handler(req, resp)
+                        if hdl_result is not None:
+                            for item in hdl_result:
+                                assert isinstance(item, Request)
+                                self._request_queue.put(item)
+                    except Exception as ex:
+                        logging.exception('Response handler error')
+                        #self._fatal_errors.put(ex)
+                        self.stat.store('handler_error', '%s|%s|%s|%s' % (
+                            req.tag, ex.__class__.__name__, str(ex), req.url
+                        ))
+        except Exception as ex:
+            self._fatal_errors.put(ex)
 
     def start_threads(self, pool, num, func, daemon=False, args=None, kwargs=None):
         for _ in range(num):

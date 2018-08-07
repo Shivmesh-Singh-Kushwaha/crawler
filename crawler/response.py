@@ -6,21 +6,30 @@ import defusedxml.lxml
 from lxml.html import HTMLParser
 from selection import XpathSelector
 
-
 __all__ = ('Response',)
 THREAD_STORAGE = threading.local()
 
 
 class Response(object):
-    def __init__(self, body, url):
+    def __init__(
+            self, body=None, url=None, effective_url=None,
+            code=None, times=None, bytes_downloaded=None,
+            bytes_uploaded=None
+        ):
+        self.code = code
         self.body = body
         self.url = url
+        self.effective_url = effective_url
+        self.times = times
+        self.bytes_downloaded = bytes_downloaded
+        self.bytes_uploaded = bytes_uploaded
 
     def absolute_url(self, url=None):
+        base_url = self.effective_url or self.url
         if url is None:
-            return self.url
+            return base_url
         else:
-            return urljoin(self.url, url)
+            return urljoin(base_url, url)
 
     def text(self):
         return self.body.decode('utf-8')
