@@ -9,10 +9,12 @@ Crawler
     :target: https://coveralls.io/r/lorien/crawler?branch=master
 
 Main goals of project:
+
  * stability
  * speed
  * reasonable memory usage
  * SOCKS proxy support
+ * runtime metrics API
 
 
 Usage Example
