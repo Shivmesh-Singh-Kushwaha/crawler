@@ -1,3 +1,4 @@
+from copy import deepcopy
 import os.path
 import time
 import logging
@@ -5,6 +6,7 @@ from queue import Empty
 import multiprocessing
 from threading import Thread, Event, get_ident, current_thread
 from queue import Queue, Empty
+from collections import deque
 
 from weblib.error import RequiredDataNotFound
 
@@ -29,6 +31,7 @@ class Crawler(object):
             num_parsers=None,
             try_limit=10,
             meta=None,
+            speed_metrics=None,
         ):
         self._meta = meta if meta is not None else {}
         self.config = {
@@ -40,6 +43,10 @@ class Crawler(object):
                 else max(1, multiprocessing.cpu_count() // 2)
             ),
             'try_limit': try_limit,
+            'speed_metrics': (
+                speed_metrics if speed_metrics is not None
+                else ['network:request', 'network:request-ok']
+            ),
         }
         self._request_queue = Queue(
             maxsize=0,#self.config['num_network_threads']
@@ -204,12 +211,56 @@ class Crawler(object):
         # TODO: stop all processes
         self._work_allowed = False
 
+    def worker_stat(self):
+        try:
+            history = []
+            minute_shots = deque(maxlen=12)
+            sleep_time = 1
+            while True:
+                history_ts = None
+                if history_ts is None or time.time() - history_ts >= 60:
+                    shot = deepcopy(self.stat.counters)
+                    history.append(shot)
+                speed_shot = {
+                    x: self.stat.counters[x]
+                    for x in self.config['speed_metrics']
+                }
+                minute_shots.append(speed_shot)
+                avg_speed = {}
+                if len(minute_shots) > 1:
+                    for key in self.config['speed_metrics']:
+                        alias = {
+                            'network:request': 'req',
+                            'network:request-ok': 'req-ok',
+                        }.get(key, key)
+                        avg_speed[alias] = (
+                            (minute_shots[-1][key] - minute_shots[0][key])
+                            / (sleep_time * (len(minute_shots) - 1))
+                        )
+                    ignore_prefixes = ('network:', 'parser:')
+                    output = '%s [%s]' % (
+                        ', '.join('%s: %d/s' % x for x in avg_speed.items()),
+                        ', '.join(
+                            '%s: %d' % x for x in self.stat.counters.items()
+                            if not x[0].startswith(ignore_prefixes)
+                        ),
+                    )
+                    logging.debug(output)
+                time.sleep(sleep_time)
+
+        except Exception as ex:
+            self._fatal_errors.put(ex)
+
     def run(self):
         self.register_handlers()
 
         task_generator_thread = Thread(target=self.worker_task_generator)
         task_generator_thread.daemon = True
         task_generator_thread.start()
+
+        stat_thread = Thread(target=self.worker_stat)
+        stat_thread.daemon = True
+        stat_thread.start()
 
         th, address = start_api_server_thread(self)
         if os.path.exists('var') and os.path.isdir('var'):
@@ -219,12 +270,14 @@ class Crawler(object):
         self.start_threads(
             self._net_threads,
             self.config['num_network_threads'],
-            self.worker_network
+            self.worker_network,
+            daemon=True
         )
         self.start_threads(
             self._parser_threads,
             self.config['num_parsers'],
             self.worker_parser,
+            daemon=True
         )
         try:
             while self._work_allowed:
@@ -233,6 +286,7 @@ class Crawler(object):
                 except Empty:
                     pass
                 else:
+                    logging.error('', exc_info=ex)
                     raise ex
                 #print('main loop')
                 if not task_generator_thread.is_alive():
@@ -279,18 +333,18 @@ class Crawler(object):
                         self._resume_event.clear()
         finally:
             control_logger.debug('Inside finally')
-            for x in range(self.config['num_network_threads']):
-                self._request_queue.put('kill')
-            for x in range(self.config['num_parsers']):
-                self._response_queue.put('kill')
-            # Wait for threads with `.join(timeout)`
-            # If timeout happens threads will stop anyway
-            # because they are `.daemon=True`
-            control_logger.debug('Waiting for net threads')
-            [x['thread'].join(1) for x in self._net_threads.values()]
-            control_logger.debug('Waiting for parser threads')
-            [x['thread'].join(1) for x in self._parser_threads.values()]
-            # Last check for some unhandled fatal exceptions
+            ## for x in range(self.config['num_network_threads']):
+            ##     self._request_queue.put('kill')
+            ## for x in range(self.config['num_parsers']):
+            ##     self._response_queue.put('kill')
+            ## # Wait for threads with `.join(timeout)`
+            ## # If timeout happens threads will stop anyway
+            ## # because they are `.daemon=True`
+            ## control_logger.debug('Waiting for net threads')
+            ## [x['thread'].join(1) for x in self._net_threads.values()]
+            ## control_logger.debug('Waiting for parser threads')
+            ## [x['thread'].join(1) for x in self._parser_threads.values()]
+            #  Last check for some unhandled fatal exceptions
             try:
                 ex = self._fatal_errors.get(block=False)
             except Empty:
