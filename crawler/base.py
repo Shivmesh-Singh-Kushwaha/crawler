@@ -4,8 +4,9 @@ import logging
 from queue import Empty
 import multiprocessing
 from threading import Thread, Event, get_ident, current_thread
-
 from queue import Queue, Empty
+
+from weblib.error import RequiredDataNotFound
 
 from .request import Request
 from .response import Response
@@ -26,8 +27,7 @@ class Crawler(object):
             self,
             num_network_threads=10,
             num_parsers=None,
-            network_try_limit=10,
-            task_try_limit=10,
+            try_limit=10,
             meta=None,
         ):
         self._meta = meta if meta is not None else {}
@@ -39,8 +39,7 @@ class Crawler(object):
                 num_parsers if num_parsers is not None
                 else max(1, multiprocessing.cpu_count() // 2)
             ),
-            'network_try_limit': network_try_limit,
-            'task_try_limit': task_try_limit,
+            'try_limit': try_limit,
         }
         self._request_queue = Queue(
             maxsize=0,#self.config['num_network_threads']
@@ -107,16 +106,18 @@ class Crawler(object):
                 self._net_threads[id(current_thread())]['active'] = True
                 network_logger.debug('GET %s' % req.url)
                 try:
+                    self.stat.inc('network:request')
+                    self.stat.inc('network:request-%s' % req.tag)
                     try:
                         resp = self.network_transport.process_request(req)
                     except NetworkError as ex:
                         self.stat.inc('network:request-error')
                         self.stat.inc('network:request-error-%s' % req.tag)
                         #print('NET ERROR (%s) %s' % (ex, req.url))
-                        req.network_try_count += 1
-                        if req.network_try_count > self.config['network_try_limit']:
+                        req.try_count += 1
+                        if req.try_count > self.config['try_limit']:
                             self.stat.store(
-                                'network_try_rejected', '%s|%s' % (req.url, ex)
+                                'try_rejected', '%s|%s' % (req.url, ex)
                             )
                             self.process_rejected_request(req, None, ex)
                         else:
@@ -170,6 +171,15 @@ class Crawler(object):
                             for item in hdl_result:
                                 assert isinstance(item, Request)
                                 self._request_queue.put(item)
+                    except RequiredDataNotFound as ex:
+                        req.try_count += 1
+                        if req.try_count > self.config['try_limit']:
+                            self.stat.store(
+                                'try_rejected', '%s|%s' % (req.url, ex)
+                            )
+                            self.process_rejected_request(req, resp, ex)
+                        else:
+                            self._request_queue.put(req)
                     except Exception as ex:
                         logging.exception('Response handler error')
                         #self._fatal_errors.put(ex)

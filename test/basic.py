@@ -125,7 +125,7 @@ class BasicTestCase(BaseTestCase, TestCase):
                 self.errors.append(req.meta['id'])
 
         self.server.response['sleep'] = 0.3
-        bot = SimpleCrawler(network_try_limit=1)
+        bot = SimpleCrawler(try_limit=1)
         bot.run()
         self.assertEqual(set(bot.points), set([2]))
         self.assertEqual(set(bot.errors), set([1]))

@@ -12,8 +12,7 @@ class Request(object):
             meta=None,
             timeout=10,
             connect_timeout=2,
-            network_try_count=1,
-            task_try_count=1,
+            try_count=1,
         ):
         self.url = url
         if tag is None:
@@ -25,5 +24,4 @@ class Request(object):
             self.meta = meta
         self.timeout = timeout
         self.connect_timeout = connect_timeout
-        self.network_try_count = network_try_count
-        self.task_try_count = task_try_count
+        self.try_count = try_count
