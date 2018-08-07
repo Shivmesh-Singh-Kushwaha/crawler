@@ -8,9 +8,10 @@ from queue import Queue, Empty
 
 from .request import Request
 from .response import Response
-from .error import UnknownTaskType
 from .stat import Stat
+from .error import CrawlerError
 from .curl_transport import CurlTransport, NetworkError
+from .api import start_api_server_thread
 
 
 __all__ = ('Crawler',)
@@ -22,6 +23,7 @@ class Crawler(object):
     def __init__(
             self,
             num_network_threads=10,
+            num_parsers=None,
             network_try_limit=10,
             task_try_limit=10,
             meta=None,
@@ -31,12 +33,15 @@ class Crawler(object):
             'num_network_threads': num_network_threads,
             # Number of parser should be num of cores
             # divided by 2 because of hyperthreading
-            'num_parsers': max(1, multiprocessing.cpu_count() // 2),
+            'num_parsers': (
+                num_parsers if num_parsers is not None
+                else max(1, multiprocessing.cpu_count() // 2)
+            ),
             'network_try_limit': network_try_limit,
             'task_try_limit': task_try_limit,
         }
         self._request_queue = Queue(
-            maxsize=self.config['num_network_threads']
+            maxsize=0,#self.config['num_network_threads']
         )
         self._response_queue = Queue(
             maxsize=self.config['num_parsers'],
@@ -45,7 +50,6 @@ class Crawler(object):
         self._stat = Stat()
         self.network_transport = CurlTransport()
         self._work_allowed = True
-        self._pause_event = Event()
         self._resume_event = Event()
         self._net_threads = {}
         self._parser_threads = {}
@@ -62,16 +66,29 @@ class Crawler(object):
             yield None
 
     def worker_task_generator(self):
+        """
+        Put new requests from task generator into request queue
+        Make a pause if there are more than (10 * number of network threads)
+        requests in queue.
+        """
         try:
-            for task in self.task_generator():
+            gen = self.task_generator()
+            while True:
                 if not self._work_allowed:
                     return
-                if isinstance(task, Request):
-                    self._request_queue.put(task)
+                if self._request_queue.qsize() > (10 * self.config['num_network_threads']):
+                    time.sleep(0.1)
+                try:
+                    task = next(gen)
+                except StopIteration:
+                    break
                 else:
-                    raise UnknownTaskType(
-                        'Unknown task got from task_generator: %s' % task
-                    )
+                    if isinstance(task, Request):
+                        self._request_queue.put(task)
+                    else:
+                        raise CrawlerError(
+                            'Unknown task got from task_generator: %s' % task
+                        )
         except Exception as ex:
             self._fatal_errors.put(ex)
 
@@ -81,14 +98,16 @@ class Crawler(object):
     def worker_network(self):
         while True:
             req = self._request_queue.get()
-            if req is None:
+            if req == 'kill':
                 return
+            #print('GOT NETWORK REQ', req.url)
             self._net_threads[id(current_thread())]['active'] = True
-            logging.debug('GET {}'.format(req.url))
+            logging.debug('GET %s' % req.url)
             try:
                 try:
                     resp = self.network_transport.process_request(req)
                 except NetworkError as ex:
+                    #print('NET ERROR (%s) %s' % (ex, req.url))
                     req.network_try_count += 1
                     if req.network_try_count > self.config['network_try_limit']:
                         self._stat.store(
@@ -98,10 +117,13 @@ class Crawler(object):
                     else:
                         self._request_queue.put(req)
                 except Exception as ex:
+                    #print('UNEXPECTED ERROR (%s) %s' % (ex, req.url))
                     self._fatal_errors.put(ex)
                 else:
+                    #print('Sending response to queue: %s' % req.url)
                     self._response_queue.put((req, resp))
             finally:
+                #print('Finish processing %s' % req.url)
                 self._net_threads[id(current_thread())]['active'] = False
 
 
@@ -119,16 +141,14 @@ class Crawler(object):
 
     def worker_parser(self):
         while True:
-            try:
-                task = self._response_queue.get(True, 0.5)
-            except Empty:
-                if self._pause_event:
-                    self._parser_threads[id(current_thread())]['paused'] = True
-                    self._resume_event.wait()
-                    self._parser_threads[id(current_thread())]['paused'] = False
+            task = self._response_queue.get()
+            if task == 'pause':
+                self._parser_threads[id(current_thread())]['paused'] = True
+                self._resume_event.wait()
+                self._parser_threads[id(current_thread())]['paused'] = False
+            elif task == 'kill':
+                return
             else:
-                if task is None:
-                    return
                 req, resp = task
                 handler = self._handlers[req.tag]
                 ## Call handler with arguments: request, response
@@ -166,6 +186,10 @@ class Crawler(object):
         task_generator_thread.daemon = True
         task_generator_thread.start()
 
+        th, address = start_api_server_thread(self)
+        with open('var/api_url.txt', 'w') as out:
+            out.write('http://%s:%d/' % address)
+
         self.start_threads(
             self._net_threads,
             self.config['num_network_threads'],
@@ -179,23 +203,26 @@ class Crawler(object):
         try:
             while self._work_allowed:
                 try:
-                    ex = self._fatal_errors.get(True, 0.1)
+                    ex = self._fatal_errors.get(True, 0.01)
                 except Empty:
                     pass
                 else:
                     raise ex
+                #print('main loop')
                 if not task_generator_thread.is_alive():
                     if (
                             not self._request_queue.qsize()
                             and not self._response_queue.qsize()
                         ):
                         control_logger.debug('pause')
-                        self._pause_event.set()
+                        [self._response_queue.put('pause')
+                            for x in self._parser_threads]
                         while any(
                                 not x['paused']
                                 for x in self._parser_threads.values()
                             ):
-                            time.sleep(0.01)
+                            control_logger.debug('wait all parser threads is paused')
+                            time.sleep(0.001)
                         control_logger.debug('all parsers are paused')
                         # At this point task generator is not active
                         # and all parsers are paused
@@ -213,29 +240,33 @@ class Crawler(object):
                             control_logger.debug('Shutdown allowed')
                             self._work_allowed = False
                         # Unpause parsers to allow them to process
-                        # new data or None values (in case of shutdown)
+                        # new data (shutdown procedure also requires this)
                         control_logger.debug('Unpausing')
-                        self._pause_event.clear()
                         self._resume_event.set()
                         control_logger.debug('Wating all parsers unpaused')
                         while any(
                                 x['paused']
                                 for x in self._parser_threads.values()
                             ):
-                            time.sleep(0.01)
+                            control_logger.debug('wait all parser threads is un-paused')
+                            time.sleep(0.001)
                         self._resume_event.clear()
         finally:
             control_logger.debug('Inside finally')
             for x in range(self.config['num_network_threads']):
-                self._request_queue.put(None)
+                self._request_queue.put('kill')
             for x in range(self.config['num_parsers']):
-                self._response_queue.put(None)
+                self._response_queue.put('kill')
+            # Wait for threads with `.join(timeout)`
+            # If timeout happens threads will stop anyway
+            # because they are `.daemon=True`
             control_logger.debug('Waiting for net threads')
-            [x['thread'].join() for x in self._net_threads.values()]
+            [x['thread'].join(1) for x in self._net_threads.values()]
             control_logger.debug('Waiting for parser threads')
-            [x['thread'].join() for x in self._parser_threads.values()]
+            [x['thread'].join(1) for x in self._parser_threads.values()]
+            # Last check for some unhandled fatal exceptions
             try:
-                ex = self._fatal_errors.get(True, 0.1)
+                ex = self._fatal_errors.get(block=False)
             except Empty:
                 pass
             else:

@@ -53,7 +53,6 @@ class BasicTestCase(BaseTestCase, TestCase):
         bot = SimpleCrawler(num_network_threads=4)
         bot.run()
         self.assertEqual(len(bot.counters), 20)
-        print(bot.counters)
         self.assertTrue(any(x in [3, 4] for x in bot.counters))
         self.assertFalse(any(x in [9, 10] for x in bot.counters))
 

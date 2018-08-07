@@ -13,6 +13,7 @@ setup(
     author_email = 'lorien@lorien.name',
     install_requires = [
         'pycurl<7.43.0.2',
+        'psutil',
     ],
     packages = find_packages(),
     license = "MIT",

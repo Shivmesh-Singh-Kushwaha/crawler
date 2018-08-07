@@ -5,7 +5,7 @@ from test_server import TestServer
 
 from crawler import Crawler
 from crawler.request import Request
-from crawler.error import UnknownTaskType
+from crawler.error import CrawlerError
 from .util import BaseTestCase
 
 
@@ -50,4 +50,4 @@ class TaskGeneratorTestCase(BaseTestCase, TestCase):
                 yield {'message': 'Show must go on!'}
 
         bot = SimpleCrawler()
-        self.assertRaises(UnknownTaskType, bot.run)
+        self.assertRaises(CrawlerError, bot.run)
