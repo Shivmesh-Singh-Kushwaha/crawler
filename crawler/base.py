@@ -1,3 +1,4 @@
+import os.path
 import time
 import logging
 from queue import Empty
@@ -201,8 +202,9 @@ class Crawler(object):
         task_generator_thread.start()
 
         th, address = start_api_server_thread(self)
-        with open('var/api_url.txt', 'w') as out:
-            out.write('http://%s:%d/' % address)
+        if os.path.exists('var') and os.path.isdir('var'):
+            with open('var/api_url.txt', 'w') as out:
+                out.write('http://%s:%d/' % address)
 
         self.start_threads(
             self._net_threads,
