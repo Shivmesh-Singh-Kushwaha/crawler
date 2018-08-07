@@ -13,6 +13,9 @@ class Request(object):
             timeout=10,
             connect_timeout=2,
             try_count=1,
+            proxy=None,
+            proxy_auth=None,
+            proxy_type='http',
         ):
         self.url = url
         if tag is None:
@@ -25,3 +28,6 @@ class Request(object):
         self.timeout = timeout
         self.connect_timeout = connect_timeout
         self.try_count = try_count
+        self.proxy = proxy
+        self.proxy_auth = proxy_auth
+        self.proxy_type = proxy_type

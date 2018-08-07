@@ -32,6 +32,10 @@ class Crawler(object):
             try_limit=10,
             meta=None,
             speed_metrics=None,
+            proxylist_type='http',
+            proxylist_file=None,
+            proxylist_url=None,
+            proxylist_reload_time=(60 * 10),
         ):
         self._meta = meta if meta is not None else {}
         self.config = {
@@ -47,6 +51,10 @@ class Crawler(object):
                 speed_metrics if speed_metrics is not None
                 else ['network:request', 'network:request-ok']
             ),
+            'proxylist_type': proxylist_type,
+            'proxylist_file': proxylist_file,
+            'proxylist_url': proxylist_url,
+            'proxylist_reload_time': proxylist_reload_time,
         }
         self._request_queue = Queue(
             maxsize=0,#self.config['num_network_threads']
@@ -61,6 +69,17 @@ class Crawler(object):
         self._resume_event = Event()
         self._net_threads = {}
         self._parser_threads = {}
+        self.proxylist = None
+        if self.config['proxylist_file']:
+            self.proxylist = ProxyList.from_file(
+                self.config['proxylist_file'],
+                proxy_type=self.config['proxylist_type'],
+            )
+        if self.config['proxylist_url']:
+            self.proxylist = ProxyList.from_url(
+                self.config['proxylist_url'],
+                proxy_type=self.config['proxylist_type'],
+            )
         self.init_hook()
 
     def init_hook(self):
@@ -103,6 +122,13 @@ class Crawler(object):
     def add_task(self, task):
         self._request_queue.put(task)
 
+    def process_request_proxy(self, req):
+        if self.proxylist:
+            proxy = self.proxylist.random_server()
+            req.proxy = proxy.address()
+            req.proxy_auth = proxy.auth()
+            req.proxy_type = proxy.proxy_type
+
     def worker_network(self):
         try:
             while True:
@@ -111,11 +137,16 @@ class Crawler(object):
                     return
                 #print('GOT NETWORK REQ', req.url)
                 self._net_threads[id(current_thread())]['active'] = True
-                network_logger.debug('GET %s' % req.url)
+                if req.proxy:
+                    via_proxy = ' via %s proxy %s' % (req.proxy_type, req.proxy)
+                else:
+                    via_proxy = ''
+                network_logger.debug('GET %s%s' % (req.url, via_proxy))
                 try:
                     self.stat.inc('network:request')
                     self.stat.inc('network:request-%s' % req.tag)
                     try:
+                        self.process_request_proxy(req)
                         resp = self.network_transport.process_request(req)
                     except NetworkError as ex:
                         self.stat.inc('network:request-error')
@@ -251,6 +282,20 @@ class Crawler(object):
         except Exception as ex:
             self._fatal_errors.put(ex)
 
+    def worker_proxylist(self):
+        try:
+            while True:
+                time.sleep(self.config['proxylist_reload_time'])
+                try:
+                    self.proxylist.reload()
+                except Exception as ex:
+                    self.stat.inc('proxylist:reload-error')
+                    logging.exception('Failed to reload proxy list')
+                else:
+                    self.stat.inc('proxylist:reload-ok')
+        except Exception as ex:
+            self._fatal_errors.put(ex)
+
     def run(self):
         self.register_handlers()
 
@@ -261,6 +306,11 @@ class Crawler(object):
         stat_thread = Thread(target=self.worker_stat)
         stat_thread.daemon = True
         stat_thread.start()
+
+        if self.proxylist:
+            proxylist_thread = Thread(target=self.worker_proxylist)
+            proxylist_thread.daemon = True
+            proxylist_thread.start()
 
         th, address = start_api_server_thread(self)
         if os.path.exists('var') and os.path.isdir('var'):

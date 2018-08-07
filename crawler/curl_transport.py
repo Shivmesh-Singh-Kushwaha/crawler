@@ -12,8 +12,8 @@ class CurlTransport(object):
         curl = pycurl.Curl()
         try:
             # Do not use signals for timeouts
-            # dns timeouts will not be processed in default name resolver
-            # needs to use cares resolver
+            # (!) DNS timeouts will not be processed by default name resolver
+            # Need to use cares resolver
             curl.setopt(pycurl.NOSIGNAL, 1)
             # Basic settings
             curl.setopt(pycurl.URL, req.url)
@@ -27,6 +27,14 @@ class CurlTransport(object):
             curl.setopt(
                 pycurl.CONNECTTIMEOUT_MS, int(1000 * req.connect_timeout)
             )
+            # Proxy
+            if req.proxy:
+                curl.setopt(pycurl.PROXY, grab.config['proxy'])
+            if req.proxy_auth:
+                curl.setopt(pycurl.PROXYUSERPWD, req.proxy_auth)
+            key = 'PROXYTYPE_%s' % (req.proxy_type or 'http').upper()
+            curl.setopt(pycurl.PROXYTYPE, getattr(pycurl, key))
+            # Make request
             curl.perform()
         except pycurl.error as ex:
             raise NetworkError(str(ex), ex)
