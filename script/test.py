@@ -15,12 +15,17 @@ class MyCrawler(Crawler):
             yield Request('page', url='http://127.0.0.1/awesome_python.html?%d' % x)
 
     def handler_page(self, req, res):
-        parser = HTMLParser()
-        dom = fromstring(res.body, parser=parser)
-        title = dom.xpath('//title')[0].text
+        # 1
+        #parser = HTMLParser()
+        #dom = fromstring(res.body, parser=parser)
+        #title = dom.xpath('//title')[0].text
+        # 2
         #fast_parser= FastHTMLParser(res.body)
         #title = fast_parser.css('title')[0].text()
         #assert title.startswith('awesome-web-scraping')
+        # 3
+        title = res.xpath('//title').text()
+        assert title.startswith('awesome-web-scraping')
 
 
 def main(**kwargs):
