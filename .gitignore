@@ -16,3 +16,4 @@
 .pytest_cache
 /trash/
 /src/
+/test.py
