@@ -403,3 +403,4 @@ class Crawler(object):
             else:
                 raise ex
             self.shutdown_hook()
+            logger.debug('done')

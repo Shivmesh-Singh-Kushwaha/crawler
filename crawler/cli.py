@@ -1,12 +1,10 @@
 import sys
+import re
 import os.path
 import logging
 from argparse import ArgumentParser
 
-from grab.spider.base import Spider
-from grab.spider.error import SpiderInternalError
-from grab.util.config import build_root_config, build_spider_config
-
+import crawler
 from crawler import Crawler
 
 logger = logging.getLogger('crawler.cli')
@@ -29,6 +27,11 @@ def process_module(mod, reg):
 
 def collect_crawlers():
     reg = {}
+
+    # Give crawlers in current directory max priority
+    # Otherwise `/web/crawler/crawlers` packages are imported
+    # when crawler is installed with `pip -e /web/crawler`
+    sys.path.insert(0, os.getcwd())
 
     for location in ('crawlers',):
         try:
@@ -58,20 +61,22 @@ def collect_crawlers():
     return reg
 
 
-def setup_logging(network_logs=False):
+def setup_logging(network_logs=False, control_logs=False):
     logging.basicConfig(level=logging.DEBUG)
     if not network_logs:
         logging.getLogger('crawler.network').propagate = False
+    if not control_logs:
+        logging.getLogger('crawler.control').propagate = False
 
 
 def run_command_crawl():
-
     parser = ArgumentParser()
     parser.add_argument('crawler_id')
     parser.add_argument('-n', '--network-logs', action='store_true', default=False)
+    parser.add_argument('--control-logs', action='store_true', default=False)
     opts = parser.parse_args()
 
-    setup_logging(network_logs=opts.network_logs)
+    setup_logging(network_logs=opts.network_logs, control_logs=opts.control_logs)
 
     reg = collect_crawlers()
     if opts.crawler_id not in reg:
@@ -83,3 +88,45 @@ def run_command_crawl():
         cls = reg[opts.crawler_id]
         bot = cls()
         bot.run()
+
+
+def process_file_content(data, **kwargs):
+    for key, val in kwargs.items():
+        rex = re.compile(r'{{ %s }}' % re.escape(key))
+        data = rex.sub(val, data)
+    return data
+
+
+def run_command_start_project():
+    logging.basicConfig(level=logging.DEBUG)
+
+    parser = ArgumentParser()
+    parser.add_argument('project_name')
+    opts = parser.parse_args()
+
+    dst_dir = os.path.join(os.getcwd(), opts.project_name)
+    if os.path.exists(dst_dir):
+        logger.error('Destination directory already exists: %s\n', dst_dir)
+        sys.exit(1)
+
+    os.mkdir(dst_dir)
+
+    src_dir = os.path.join(crawler.__path__[0], 'data/project')
+    logger.debug('Source directory: %s', src_dir)
+
+    for root, subdirs, files in os.walk(src_dir):
+        dst_rel_dir = root[len(src_dir):].lstrip('/')
+        for subdir in subdirs:
+            path = os.path.join(dst_dir, dst_rel_dir, subdir)
+            logger.debug('New dir: %s', path)
+            os.mkdir(path)
+        for file_ in files:
+            with open(os.path.join(root, file_)) as inp:
+                content = inp.read()
+            content = process_file_content(
+                content, project_name=opts.project_name
+            )
+            path = os.path.join(dst_dir, dst_rel_dir, file_)
+            logger.debug('New file: %s', path)
+            with open(path, 'w') as out:
+                out.write(content)

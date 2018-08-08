@@ -11,6 +11,7 @@ setup(
     url='https://github.com/lorien/crawler',
     author = 'Gregory Petukhov',
     author_email = 'lorien@lorien.name',
+    zip_safe=False,
     install_requires = [
         'pycurl<7.43.0.2',
         'psutil',
@@ -21,6 +22,7 @@ setup(
     entry_points = {
         'console_scripts': [
             'crawl=crawler.cli:run_command_crawl',
+            'crawl_start_project=crawler.cli:run_command_start_project',
         ],
     },
     license = "MIT",

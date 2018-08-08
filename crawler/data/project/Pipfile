@@ -1,0 +1,14 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+
+
+[packages]
+runscript = "*"
+pymongo = "*"
+crawler = {git = "https://github.com/lorien/crawler"}
+python-dateutil = "*"
+jsondate = "*"
+jsonschema = "*"
+jinja2 = "*"
+pytest = "*"

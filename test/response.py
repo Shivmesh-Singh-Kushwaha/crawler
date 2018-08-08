@@ -19,7 +19,7 @@ class ResponseTestCase(TestCase):
     def test_lxml_tree_realdata(self):
         import lxml.etree
 
-        with open('data/awesome_python.html', 'rb') as inp:
+        with open('crawler/data/awesome_python.html', 'rb') as inp:
             data = inp.read()
         res = Response(body=data, url=None)
         self.assertTrue(isinstance(res._lxml_tree(), lxml.etree._ElementTree))
@@ -34,7 +34,7 @@ class ResponseTestCase(TestCase):
     def test_xpath(self):
         from selection import XpathSelector
 
-        with open('data/awesome_python.html', 'rb') as inp:
+        with open('crawler/data/awesome_python.html', 'rb') as inp:
             data = inp.read()
         res = Response(body=b'<title>foo</title>', url=None)
 

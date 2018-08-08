@@ -48,3 +48,7 @@ class Response(object):
 
     def xpath(self, query):
         return self.selector('lxml_xpath').select(query)
+
+    def save(self, path):
+        with open(path, 'wb') as out:
+            out.write(self.body)

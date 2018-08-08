@@ -46,12 +46,19 @@ Usage Example
     bot.run()
 
 
-Run Crawler from Command Line
-=============================
+Quick Way to Start New Project
+==============================
 
-* Create package `crawlers`, just a directory `crawlers` with `__init__.py` file
-* Put your spider in any `.py` file in this directory
-* Run `crawl YouSpiderClassName`
+* Install crawler with `pip install crawler`
+* Run command `crawler_start_project <project_name>`
+* cd into new directory
+* Run `make build`
+
+That'll build virtualenv with all things you need to start using crawler.
+To active virtualenv run `pipenv shell` command.
+
+Put you crawler code into `crawlers/` directory.
+Then run it with command `crawl <CrawlerClassName>`
 
 
 Installation
