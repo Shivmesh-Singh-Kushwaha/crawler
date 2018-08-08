@@ -22,6 +22,7 @@ __all__ = ('Crawler',)
 logger = logging.getLogger('crawler.base')
 control_logger = logging.getLogger('crawler.control')
 network_logger = logging.getLogger('crawler.network')
+stat_logger = logging.getLogger('crawler.stat')
 
 
 class Crawler(object):
@@ -276,7 +277,7 @@ class Crawler(object):
                             if not x[0].startswith(ignore_prefixes)
                         ),
                     )
-                    logging.debug(output)
+                    stat_logger.debug(output)
                 time.sleep(sleep_time)
 
         except Exception as ex:

@@ -11,7 +11,7 @@ from crawler import Crawler, Request
 from crawler.api import start_api_server_thread
 
 
-class MyCrawler(Crawler):
+class TestCrawler(Crawler):
     def task_generator(self):
         for x in range(2000):
             yield Request('page', url='http://127.0.0.1/awesome_python.html?%d' % x)
@@ -30,7 +30,7 @@ class MyCrawler(Crawler):
         assert title.startswith('awesome-web-scraping')
 
 
-def main(**kwargs):
-    logging.getLogger('crawler.network').propagate = False
-    bot = MyCrawler(num_network_threads=100, num_parsers=2)
-    bot.run()
+#def main(**kwargs):
+#    logging.getLogger('crawler.network').propagate = False
+#    bot = MyCrawler(num_network_threads=100, num_parsers=2)
+#    bot.run()

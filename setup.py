@@ -18,6 +18,11 @@ setup(
         'defusedxml',
     ],
     packages = find_packages(),
+    entry_points = {
+        'console_scripts': [
+            'crawl=crawler.cli:run_command_crawl',
+        ],
+    },
     license = "MIT",
     classifiers = [
         'Programming Language :: Python',
