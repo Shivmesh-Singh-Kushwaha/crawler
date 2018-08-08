@@ -1,10 +1,7 @@
 # Crawler - framework to build... crawlers!
 
-.. image:: https://travis-ci.org/lorien/crawler.png?branch=master
-    :target: https://travis-ci.org/lorien/crawler
-
-.. image:: https://coveralls.io/repos/lorien/crawler/badge.svg?branch=master
-    :target: https://coveralls.io/r/lorien/crawler?branch=master
+[![travis-ci.org/lorien/crawler](https://travis-ci.org/lorien/crawler.png?branch=master)](https://travis-ci.org/lorien/crawler)
+[![coveralls.io:crawler](https://coveralls.io/repos/lorien/crawler/badge.svg?branch=master)](https://coveralls.io/r/lorien/crawler?branch=master)
 
 ## Main goals of project:
 
