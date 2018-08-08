@@ -46,6 +46,14 @@ Usage Example
     bot.run()
 
 
+Run Crawler from Command Line
+=============================
+
+* Create package `crawlers`, just a directory `crawlers` with `__init__.py` file
+* Put your spider in any `.py` file in this directory
+* Run `crawl YouSpiderClassName`
+
+
 Installation
 ============
 
