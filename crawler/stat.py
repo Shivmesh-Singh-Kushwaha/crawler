@@ -10,5 +10,5 @@ class Stat(object):
         self.counters[key] += value
 
     def store(self, key, value):
-        self.inc('key')
+        self.inc(key)
         self.items[key].append(value)

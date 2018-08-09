@@ -13,7 +13,7 @@ from weblib.error import RequiredDataNotFound
 from .request import Request
 from .response import Response
 from .stat import Stat
-from .error import CrawlerError
+from .error import CrawlerError, BadStatusCode
 from .curl_transport import CurlTransport, NetworkError
 from .api import start_api_server_thread
 from .proxylist import ProxyList
@@ -137,6 +137,8 @@ class Crawler(object):
                 req = self._request_queue.get()
                 if req == 'kill':
                     return
+                if not isinstance(req, Request):
+                    raise CrawlerError('Network thread got request of unexpected type: %s' % req)
                 #print('GOT NETWORK REQ', req.url)
                 self._net_threads[id(current_thread())]['active'] = True
                 if req.proxy:
@@ -147,19 +149,30 @@ class Crawler(object):
                 try:
                     self.stat.inc('network:request')
                     self.stat.inc('network:request-%s' % req.tag)
+                    net_error = None
                     try:
                         self.process_request_proxy(req)
                         resp = self.network_transport.process_request(req)
                     except NetworkError as ex:
+                        net_error = ex
+                    else:
+                        if (
+                                resp.code >= 400
+                                and resp.code != 404
+                                and resp.code not in resp.extra_valid_codes
+                            ):
+                            net_error = BadStatusCode
+
+                    if net_error:
                         self.stat.inc('network:request-error')
                         self.stat.inc('network:request-error-%s' % req.tag)
                         #print('NET ERROR (%s) %s' % (ex, req.url))
                         req.try_count += 1
                         if req.try_count > self.config['try_limit']:
                             self.stat.store(
-                                'try_rejected', '%s|%s' % (req.url, ex)
+                                'try_rejected', '%s|%s' % (req.url, net_error)
                             )
-                            self.process_rejected_request(req, None, ex)
+                            self.process_rejected_request(req, None, net_error)
                         else:
                             self._request_queue.put(req)
                     else:

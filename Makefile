@@ -20,6 +20,3 @@ clean:
 
 upload:
 	python setup.py sdist upload
-
-coverage:
-	coverage report -m

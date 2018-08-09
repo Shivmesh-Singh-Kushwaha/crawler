@@ -8,13 +8,13 @@ Crawler
 .. image:: https://coveralls.io/repos/lorien/crawler/badge.svg?branch=master
     :target: https://coveralls.io/r/lorien/crawler?branch=master
 
-Main goals of project:
+This project is about:
 
-* stability
-* speed
-* reasonable memory usage
+* 100% test coverage
+* Speed
+* Reasonable memory consumption
 * SOCKS proxy support
-* runtime metrics API
+* Runtime metrics API
 
 
 Usage Example

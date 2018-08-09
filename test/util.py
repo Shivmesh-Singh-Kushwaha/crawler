@@ -61,6 +61,9 @@ class ProxyServer(HTTPServer):
     allow_reuse_address = True
     num_requests = 0
 
+    def address(self):
+        return '%s:%d' % self.server_address
+
 
 def start_proxy_server(host='127.0.0.1'):
     server = ProxyServer(

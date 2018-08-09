@@ -9,7 +9,7 @@ from .util import BaseTestCase
 class BasicTestCase(BaseTestCase, TestCase):
     def test_single_request(self):
 
-        class SimpleCrawler(Crawler):
+        class TestCrawler(Crawler):
             data = {}
 
             def handler_test(self, req, res):
@@ -18,7 +18,7 @@ class BasicTestCase(BaseTestCase, TestCase):
         token = b'Python'
         self.server.response['data'] = token
 
-        bot = SimpleCrawler()
+        bot = TestCrawler()
         bot.add_task(Request('test', url=self.server.get_url()))
         bot.run()
         self.assertEquals(token, bot.data['response'])
@@ -33,7 +33,7 @@ class BasicTestCase(BaseTestCase, TestCase):
 
         server = self.server
 
-        class SimpleCrawler(Crawler):
+        class TestCrawler(Crawler):
             def init_hook(self):
                 self.counters = []
 
@@ -46,18 +46,18 @@ class BasicTestCase(BaseTestCase, TestCase):
                     x['active'] for x in self._net_threads.values()
                 ]))
 
-        bot = SimpleCrawler(num_network_threads=1)
+        bot = TestCrawler(num_network_threads=1)
         bot.run()
         self.assertEqual(len(bot.counters), 20)
         self.assertTrue(all(x in [0, 1] for x in bot.counters))
 
-        bot = SimpleCrawler(num_network_threads=4)
+        bot = TestCrawler(num_network_threads=4)
         bot.run()
         self.assertEqual(len(bot.counters), 20)
         self.assertTrue(any(x in [3, 4] for x in bot.counters))
         self.assertFalse(any(x in [9, 10] for x in bot.counters))
 
-        bot = SimpleCrawler(num_network_threads=10)
+        bot = TestCrawler(num_network_threads=10)
         bot.run()
         self.assertEqual(len(bot.counters), 20)
         self.assertTrue(any(x in [9, 10] for x in bot.counters))
@@ -66,7 +66,7 @@ class BasicTestCase(BaseTestCase, TestCase):
 
         server = self.server
 
-        class SimpleCrawler(Crawler):
+        class TestCrawler(Crawler):
             def init_hook(self):
                 self._urls_todo = [server.get_url()] * 10
                 self.counter = 0
@@ -78,7 +78,7 @@ class BasicTestCase(BaseTestCase, TestCase):
             def handler_test(self, req, res):
                 self.counter += 1
 
-        bot = SimpleCrawler()
+        bot = TestCrawler()
         bot.run()
         self.assertEqual(bot.counter, 10)
 
@@ -86,7 +86,7 @@ class BasicTestCase(BaseTestCase, TestCase):
 
         server = self.server
 
-        class SimpleCrawler(Crawler):
+        class TestCrawler(Crawler):
             def init_hook(self):
                 self.points = []
 
@@ -100,7 +100,7 @@ class BasicTestCase(BaseTestCase, TestCase):
                 self.points.append(res.body)
 
         self.server.response['data'] = 'Moon'
-        bot = SimpleCrawler()
+        bot = TestCrawler()
         bot.run()
         self.assertEqual(bot.points, [b'Moon', 'done'])
 
@@ -108,7 +108,7 @@ class BasicTestCase(BaseTestCase, TestCase):
 
         server = self.server
 
-        class SimpleCrawler(Crawler):
+        class TestCrawler(Crawler):
             def init_hook(self):
                 self.points = []
                 self.errors = []
@@ -126,24 +126,24 @@ class BasicTestCase(BaseTestCase, TestCase):
                 self.errors.append(req.meta['id'])
 
         self.server.response['sleep'] = 0.3
-        bot = SimpleCrawler(try_limit=1)
+        bot = TestCrawler(try_limit=1)
         bot.run()
         self.assertEqual(set(bot.points), set([2]))
         self.assertEqual(set(bot.errors), set([1]))
 
     def test_num_parsers_number(self):
 
-        class SimpleCrawler(Crawler):
+        class TestCrawler(Crawler):
             pass
 
-        bot = SimpleCrawler(num_parsers=13)
+        bot = TestCrawler(num_parsers=13)
         self.assertEqual(13, bot.config['num_parsers'])
 
     def test_num_parsers_auto(self):
 
-        class SimpleCrawler(Crawler):
+        class TestCrawler(Crawler):
             pass
 
-        bot = SimpleCrawler(num_parsers=None)
+        bot = TestCrawler(num_parsers=None)
         num = (multiprocessing.cpu_count() // 2) or 1
         self.assertEqual(num, bot.config['num_parsers'])

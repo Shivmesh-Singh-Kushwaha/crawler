@@ -14,7 +14,8 @@ class Response(object):
     def __init__(
             self, body=None, url=None, effective_url=None,
             code=None, times=None, bytes_downloaded=None,
-            bytes_uploaded=None
+            bytes_uploaded=None,
+            extra_valid_codes=None
         ):
         self.code = code
         self.body = body
@@ -23,6 +24,7 @@ class Response(object):
         self.times = times
         self.bytes_downloaded = bytes_downloaded
         self.bytes_uploaded = bytes_uploaded
+        self.extra_valid_codes = extra_valid_codes or []
 
     def absolute_url(self, url=None):
         base_url = self.effective_url or self.url
