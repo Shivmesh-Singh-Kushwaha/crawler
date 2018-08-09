@@ -1,6 +1,7 @@
 # coding: utf-8
 from unittest import TestCase
 from test_server import TestServer
+import multiprocessing
 
 from crawler import Crawler, Request
 from .util import BaseTestCase
@@ -129,3 +130,20 @@ class BasicTestCase(BaseTestCase, TestCase):
         bot.run()
         self.assertEqual(set(bot.points), set([2]))
         self.assertEqual(set(bot.errors), set([1]))
+
+    def test_num_parsers_number(self):
+
+        class SimpleCrawler(Crawler):
+            pass
+
+        bot = SimpleCrawler(num_parsers=13)
+        self.assertEqual(13, bot.config['num_parsers'])
+
+    def test_num_parsers_auto(self):
+
+        class SimpleCrawler(Crawler):
+            pass
+
+        bot = SimpleCrawler(num_parsers=None)
+        num = (multiprocessing.cpu_count() // 2) or 1
+        self.assertEqual(num, bot.config['num_parsers'])

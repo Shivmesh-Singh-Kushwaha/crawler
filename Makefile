@@ -7,7 +7,7 @@ flake_verbose:
 	flake8 crawler test script --show-pep8
 
 test:
-	tox
+	pytest --cov-report term-missing --cov crawler
 
 coverage:
 	coverage erase
@@ -20,3 +20,6 @@ clean:
 
 upload:
 	python setup.py sdist upload
+
+coverage:
+	coverage report -m

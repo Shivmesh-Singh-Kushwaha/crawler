@@ -29,7 +29,7 @@ class CurlTransport(object):
             )
             # Proxy
             if req.proxy:
-                curl.setopt(pycurl.PROXY, grab.config['proxy'])
+                curl.setopt(pycurl.PROXY, req.proxy)
             if req.proxy_auth:
                 curl.setopt(pycurl.PROXYUSERPWD, req.proxy_auth)
             key = 'PROXYTYPE_%s' % (req.proxy_type or 'http').upper()

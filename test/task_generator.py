@@ -10,6 +10,20 @@ from .util import BaseTestCase
 
 
 class TaskGeneratorTestCase(BaseTestCase, TestCase):
+    def test_empty_task_generator(self):
+
+        server = self.server
+
+        class SimpleCrawler(Crawler):
+            data = {'count': 0}
+
+            def task_generator(self):
+                if False:
+                    yield None
+
+        bot = SimpleCrawler()
+        bot.run()
+
     def test_simple_task_generator(self):
 
         server = self.server

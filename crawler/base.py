@@ -16,6 +16,7 @@ from .stat import Stat
 from .error import CrawlerError
 from .curl_transport import CurlTransport, NetworkError
 from .api import start_api_server_thread
+from .proxylist import ProxyList
 
 
 __all__ = ('Crawler',)

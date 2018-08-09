@@ -1,6 +1,7 @@
-from itertools import loop
+from itertools import cycle
 import re
 from urllib.request import urlopen
+from random import choice
 
 RE_PROXYLINE = re.compile(r'^([^:]+):(\d+)$')
 
@@ -25,7 +26,7 @@ class Proxy(object):
 
 
 class ProxyList(object):
-    def __init__(self):
+    def __init__(self, proxy_type='http'):
         self._servers = []
         self._source = None
         self.proxy_type = proxy_type
@@ -39,7 +40,7 @@ class ProxyList(object):
     @classmethod
     def from_url(cls, url, **kwargs):
         pl = ProxyList(**kwargs)
-        pl.load_url(path)
+        pl.load_url(url)
         return pl
 
     def load_file(self, path):
@@ -48,7 +49,7 @@ class ProxyList(object):
             self.load_from_rawdata(inp.read())
             
     def load_url(self, url):
-        self._source = ('url', path)
+        self._source = ('url', url)
         return self.load_from_rawdata(
             urlopen(url).read().decode('utf-8')
         )
@@ -68,7 +69,7 @@ class ProxyList(object):
                 )
         if servers:
             self._servers = servers
-            self._servers_iter = loop(self._servers)
+            self._servers_iter = cycle(self._servers)
 
     def random_server(self):
         return choice(self._servers)
