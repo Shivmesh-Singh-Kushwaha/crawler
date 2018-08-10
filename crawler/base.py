@@ -232,6 +232,10 @@ class Crawler(object):
                             )
                             self.process_rejected_request(req, resp, ex)
                         else:
+                            self.stat.inc('parser:request-data-retry')
+                            self.stat.inc(
+                                'parser:request-data-retry-%s' % req.tag
+                            )
                             self._request_queue.put(req)
                     except Exception as ex:
                         logging.exception('Response handler error')
@@ -242,7 +246,9 @@ class Crawler(object):
         except Exception as ex:
             self._fatal_errors.put(ex)
 
-    def start_threads(self, pool, num, func, daemon=False, args=None, kwargs=None):
+    def start_threads(
+            self, pool, num, func, daemon=False, args=None, kwargs=None
+        ):
         for _ in range(num):
             th = Thread(target=func, args=(args or ()), kwargs=(kwargs or {}))
             th.daemon = daemon

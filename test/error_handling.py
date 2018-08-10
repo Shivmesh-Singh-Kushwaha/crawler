@@ -1,4 +1,5 @@
 # coding: utf-8
+import time
 from unittest import TestCase
 from test_server import TestServer
 
@@ -57,3 +58,35 @@ class ErrorHandlingTestCase(BaseTestCase, TestCase):
         bot = TestCrawler()
         bot.add_task('foo')
         self.assertRaises(CrawlerError, bot.run)
+
+    def test_fatal_error_in_worker_parser(self):
+
+        server = self.server
+
+        class TestCrawler(Crawler):
+            def task_generator(self):
+                yield Request('page', url=server.get_url())
+
+            def handler_page(self, req, res):
+                # Adding "foo" in response queue
+                # raises ValueError in `req, res = resp_queue.get()`
+                self._response_queue.put('foo')
+
+        bot = TestCrawler()
+        self.assertRaises(ValueError, bot.run)
+
+    def test_fatal_error_in_worker_stat(self):
+
+        server = self.server
+
+        class TestCrawler(Crawler):
+            def task_generator(self):
+                yield Request('page', url=server.get_url())
+
+            def handler_page(self, req, res):
+                pass
+
+        # Let's break stats thread by sending incorrect value
+        # for speed_metrics option
+        bot = TestCrawler(speed_metrics=7)
+        self.assertRaises(TypeError, bot.run)

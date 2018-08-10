@@ -85,3 +85,29 @@ class BasicTestCase(BaseTestCase, TestCase):
             ]))
 
         bot.shutdown()
+
+    def test_worker_parser_kill_signal(self):
+
+        class TestCrawler(Crawler):
+            def task_generator(self):
+                time.sleep(666)
+                yield None
+
+        bot = TestCrawler(num_parsers=3)
+        th = Thread(target=bot.run)
+        th.start()
+        
+        time.sleep(0.5)
+        self.assertEqual(3, len([
+                x for x in bot._parser_threads.values()
+                if x['thread'].is_alive()
+            ]))
+        [bot._response_queue.put('kill') for x in bot._parser_threads]
+
+        time.sleep(0.5)
+        self.assertEqual(0, len([
+                x for x in bot._parser_threads.values()
+                if x['thread'].is_alive()
+            ]))
+
+        bot.shutdown()
