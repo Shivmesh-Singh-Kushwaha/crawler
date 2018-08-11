@@ -2,8 +2,11 @@ from itertools import cycle
 import re
 from urllib.request import urlopen
 from random import choice
+import logging
 
 RE_PROXYLINE = re.compile(r'^([^:]+):(\d+)$')
+logger = logging.getLogger('crawler.proxylist')
+
 
 class Proxy(object):
     __slots__ = ('host', 'port', 'user', 'password', 'proxy_type')
@@ -60,7 +63,7 @@ class ProxyList(object):
             line = line.strip()
             match = RE_PROXYLINE.match(line)
             if not match:
-                logging.error('Invalid proxy line: %s' % line)
+                logger.error('Invalid proxy line: %s' % line)
             else:
                 host, port = match.groups()
                 port = int(port)

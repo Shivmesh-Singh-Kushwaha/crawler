@@ -6,17 +6,7 @@ import multiprocessing
 from test_server import TestServer
 
 from crawler import Crawler, Request
-from .util import BaseTestCase, start_proxy_server
-
-class MemoryHandler(logging.Handler):
-    def __init__(self, *args, **kwargs):
-        super(MemoryHandler, self).__init__(*args, **kwargs)
-        self._messages = []
-
-    def emit(self, record):
-        msg = self.format(record)
-        self._messages.append(msg)
-
+from .util import BaseTestCase, start_proxy_server, MemoryLoggingHandler
 
 class BasicTestCase(BaseTestCase, TestCase):
     def test_request_logging(self):
@@ -37,7 +27,7 @@ class BasicTestCase(BaseTestCase, TestCase):
             def handler_page2(self, req, res):
                 pass
 
-        hdl = MemoryHandler()
+        hdl = MemoryLoggingHandler()
         logger = logging.getLogger('crawler.network')
         logger.setLevel(logging.DEBUG)
         logger.addHandler(hdl)

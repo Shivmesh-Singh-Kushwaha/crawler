@@ -1,4 +1,5 @@
 # coding: utf-8
+import logging
 from unittest import TestCase
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.request import urlopen, Request
@@ -73,3 +74,13 @@ def start_proxy_server(host='127.0.0.1'):
     th.daemon = True
     th.start()
     return th, server
+
+
+class MemoryLoggingHandler(logging.Handler):
+    def __init__(self, *args, **kwargs):
+        super(MemoryLoggingHandler, self).__init__(*args, **kwargs)
+        self._messages = []
+
+    def emit(self, record):
+        msg = self.format(record)
+        self._messages.append(msg)

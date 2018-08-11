@@ -3,7 +3,7 @@ from io import BytesIO
 import pycurl
 
 from .response import Response
-from .error import NetworkError
+from .error import CrawlerNetworkError
 
 
 class CurlTransport(object):
@@ -37,7 +37,7 @@ class CurlTransport(object):
             # Make request
             curl.perform()
         except pycurl.error as ex:
-            raise NetworkError(str(ex), ex)
+            raise CrawlerNetworkError(str(ex), ex)
         else:
             resp = Response(
                 code=curl.getinfo(pycurl.HTTP_CODE),

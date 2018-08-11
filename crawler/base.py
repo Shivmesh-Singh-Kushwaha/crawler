@@ -13,8 +13,8 @@ from weblib.error import RequiredDataNotFound
 from .request import Request
 from .response import Response
 from .stat import Stat
-from .error import CrawlerError, BadStatusCode
-from .curl_transport import CurlTransport, NetworkError
+from .error import CrawlerError, CrawlerBadStatusCode, CrawlerFatalError
+from .curl_transport import CurlTransport, CrawlerNetworkError
 from .api import start_api_server_thread
 from .proxylist import ProxyList
 
@@ -153,7 +153,7 @@ class Crawler(object):
                     try:
                         self.process_request_proxy(req)
                         resp = self.network_transport.process_request(req)
-                    except NetworkError as ex:
+                    except CrawlerNetworkError as ex:
                         net_error = ex
                     else:
                         if (
@@ -161,7 +161,7 @@ class Crawler(object):
                                 and resp.code != 404
                                 and resp.code not in resp.extra_valid_codes
                             ):
-                            net_error = BadStatusCode
+                            net_error = CrawlerBadStatusCode
 
                     if net_error:
                         self.stat.inc('network:request-error')
@@ -357,8 +357,7 @@ class Crawler(object):
                 except Empty:
                     pass
                 else:
-                    logging.error('', exc_info=ex)
-                    raise ex
+                    raise CrawlerFatalError() from ex
                 #print('main loop')
                 if not task_generator_thread.is_alive():
                     if (
@@ -416,11 +415,11 @@ class Crawler(object):
             ## control_logger.debug('Waiting for parser threads')
             ## [x['thread'].join(1) for x in self._parser_threads.values()]
             #  Last check for some unhandled fatal exceptions
-            try:
-                ex = self._fatal_errors.get(block=False)
-            except Empty:
-                pass
-            else:
-                raise ex
+            #try:
+            #    ex = self._fatal_errors.get(block=False)
+            #except Empty:
+            #    pass
+            #else:
+            #    raise CrawlerFatalError() from ex
             self.shutdown_hook()
             logger.debug('done')

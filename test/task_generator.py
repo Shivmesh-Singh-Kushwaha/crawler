@@ -5,7 +5,7 @@ from test_server import TestServer
 
 from crawler import Crawler
 from crawler.request import Request
-from crawler.error import CrawlerError
+from crawler.error import CrawlerError, CrawlerFatalError
 from .util import BaseTestCase
 
 
@@ -56,7 +56,7 @@ class TaskGeneratorTestCase(BaseTestCase, TestCase):
                 1/0
 
         bot = SimpleCrawler()
-        self.assertRaises(ZeroDivisionError, bot.run)
+        self.assertRaises(CrawlerFatalError, bot.run)
 
     def test_unknown_task_type_error(self):
         class SimpleCrawler(Crawler):

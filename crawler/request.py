@@ -1,4 +1,4 @@
-from crawler.error import RequestConfigurationError
+from crawler.error import CrawlerError
 
 
 __all__ = ('Request',)
@@ -19,7 +19,7 @@ class Request(object):
         ):
         self.url = url
         if tag is None:
-            raise RequestConfigurationError('Tag parameter is required')
+            raise CrawlerError('Tag parameter is required')
         self.tag = tag
         if meta is None:
             self.meta = {}

@@ -3,7 +3,7 @@ from unittest import TestCase
 from test_server import TestServer
 
 from crawler import Crawler, Request
-from crawler.error import RequestConfigurationError
+from crawler.error import CrawlerError, CrawlerFatalError
 from .util import BaseTestCase
 
 
@@ -29,7 +29,7 @@ class RequestTestCase(BaseTestCase, TestCase):
         req = Request('TAG', meta={'place': 'hell'})
         self.assertEqual(req.meta, {'place': 'hell'})
 
-    def test_tag_not_provided(self):
+    def test_crawler_tag_not_provided(self):
 
         server = self.server
 
@@ -41,4 +41,11 @@ class RequestTestCase(BaseTestCase, TestCase):
                 pass
 
         bot = SimpleCrawler()
-        self.assertRaises(RequestConfigurationError, bot.run)
+        self.assertRaises(CrawlerFatalError, bot.run)
+
+    def test_tag_not_provided(self):
+
+        self.assertRaises(
+            CrawlerError,
+            Request, url='http://example.com'
+        )

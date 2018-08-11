@@ -6,7 +6,7 @@ from test_server import TestServer
 from weblib.error import RequiredDataNotFound
 
 from crawler import Crawler, Request
-from crawler.error import CrawlerError
+from crawler.error import CrawlerError, CrawlerFatalError
 from .util import BaseTestCase
 
 class ErrorHandlingTestCase(BaseTestCase, TestCase):
@@ -57,7 +57,7 @@ class ErrorHandlingTestCase(BaseTestCase, TestCase):
 
         bot = TestCrawler()
         bot.add_task('foo')
-        self.assertRaises(CrawlerError, bot.run)
+        self.assertRaises(CrawlerFatalError, bot.run)
 
     def test_fatal_error_in_worker_parser(self):
 
@@ -73,7 +73,7 @@ class ErrorHandlingTestCase(BaseTestCase, TestCase):
                 self._response_queue.put('foo')
 
         bot = TestCrawler()
-        self.assertRaises(ValueError, bot.run)
+        self.assertRaises(CrawlerFatalError, bot.run)
 
     def test_fatal_error_in_worker_stat(self):
 
@@ -89,4 +89,25 @@ class ErrorHandlingTestCase(BaseTestCase, TestCase):
         # Let's break stats thread by sending incorrect value
         # for speed_metrics option
         bot = TestCrawler(speed_metrics=7)
-        self.assertRaises(TypeError, bot.run)
+        self.assertRaises(CrawlerFatalError, bot.run)
+
+    def test_fatal_error_in_worker_proxylist(self):
+
+        server = self.server
+
+        class TestCrawler(Crawler):
+            def task_generator(self):
+                yield Request('page', url=server.get_url())
+
+            def handler_page(self, req, res):
+                pass
+
+        self.server.response['data'] = '127.0.0.1:444'
+
+        # Let's break proxylist thread by setting
+        # incorrect value to config['proxylist_reload_time']
+        bot = TestCrawler(
+            proxylist_reload_time='foo',
+            proxylist_url=self.server.get_url(),
+        )
+        self.assertRaises(CrawlerFatalError, bot.run)
