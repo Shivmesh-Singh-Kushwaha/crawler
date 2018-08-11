@@ -85,13 +85,13 @@ class ReuseTCPServer(HTTPServer):
             'API server listens on http://%s:%d/' % self.server_address
         )
 
+    def address(self):
+        return '%s:%d' % self.server_address
 
-def start_api_server_thread(bot):
+
+def build_api_server(bot):
     ApiRequestHandler._bot = bot
     server = ReuseTCPServer(
         ("127.0.0.1", 0), ApiRequestHandler
     )
-    th = Thread(target=server.serve_forever)
-    th.daemon = True
-    th.start()
-    return th, server.server_address
+    return server

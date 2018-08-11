@@ -15,7 +15,7 @@ from .response import Response
 from .stat import Stat
 from .error import CrawlerError, CrawlerBadStatusCode, CrawlerFatalError
 from .curl_transport import CurlTransport, CrawlerNetworkError
-from .api import start_api_server_thread
+from .api import build_api_server
 from .proxylist import ProxyList
 
 
@@ -268,7 +268,7 @@ class Crawler(object):
             history = []
             minute_shots = deque(maxlen=12)
             sleep_time = 1
-            while True:
+            while self._work_allowed:
                 history_ts = None
                 if history_ts is None or time.time() - history_ts >= 60:
                     shot = deepcopy(self.stat.counters)
@@ -305,7 +305,7 @@ class Crawler(object):
 
     def worker_proxylist(self):
         try:
-            while True:
+            while self._work_allowed:
                 time.sleep(self.config['proxylist_reload_time'])
                 try:
                     self.proxylist.reload()
@@ -333,10 +333,14 @@ class Crawler(object):
             proxylist_thread.daemon = True
             proxylist_thread.start()
 
-        th, address = start_api_server_thread(self)
+        api_server = build_api_server(self)
+        api_thread = Thread(target=api_server.serve_forever)
+        api_thread.daemon = True
+        api_thread.start()
+
         if os.path.exists('var') and os.path.isdir('var'):
             with open('var/api_url.txt', 'w') as out:
-                out.write('http://%s:%d/' % address)
+                out.write('http://%s/' % api_server.address())
 
         self.start_threads(
             self._net_threads,
@@ -402,6 +406,7 @@ class Crawler(object):
                             time.sleep(0.001)
                         self._resume_event.clear()
         finally:
+            api_server.shutdown()
             control_logger.debug('Inside finally')
             ## for x in range(self.config['num_network_threads']):
             ##     self._request_queue.put('kill')
