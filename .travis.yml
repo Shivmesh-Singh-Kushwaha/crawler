@@ -12,7 +12,7 @@ matrix:
     - python: 3.5 # hack to exclude default no-env travis job
 
 install:
-  - pip install tox
+  - pip install tox coveralls
 
 script:
   - tox -e $TOX_ENV
