@@ -22,14 +22,12 @@ Usage Example
 
 .. code:: python
 
-    import re
     from urllib.parse import urlsplit
 
     from crawler import Crawler, Request
 
 
     class TestCrawler(Crawler):
-        re_title = re.compile(r'<title>([^<]+)</title>', re.S | re.I)
 
         def task_generator(self):
             for host in ('yandex.ru', 'github.com'):
