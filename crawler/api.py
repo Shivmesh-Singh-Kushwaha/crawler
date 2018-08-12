@@ -37,11 +37,11 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
         proc = psutil.Process(pid)
         mem = proc.memory_info()
         info = {
-            #'counters': self._bot.stat.counters,
+            'counters': self._bot.stat.counters,
             #'collections': dict((x, len(y)) for (x, y)
             #                    in self._bot.stat.collections.items()),
             'num_network_threads': self._bot.config['num_network_threads'],
-            #'parser_pool_size': self._bot.parser_pool_size,
+            'num_parsers': self._bot.config['num_parsers'],
             'request_queue_size': self._bot._request_queue.qsize(),
             'response_queue_size': self._bot._response_queue.qsize(),
             'rss_memory_mb': round(mem.rss / (1024 * 1024), 1)
