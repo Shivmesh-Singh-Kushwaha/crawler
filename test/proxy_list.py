@@ -117,3 +117,25 @@ class BasicTestCase(BaseTestCase, TestCase):
             'Invalid proxy line: foo',
             hdl._messages[0]
         )
+
+    def test_error_while_reloading(self):
+        logger = logging.getLogger('crawler.proxylist')
+        hdl = MemoryLoggingHandler()
+        logger.addHandler(hdl)
+
+        server = self.server
+
+        class TestCrawler(Crawler):
+            def task_generator(self):
+                server.response['code'] = 500
+                time.sleep(0.5)
+                if False:
+                    yield None
+
+        server.response['data'] = '127.0.0.1:444'
+        bot = TestCrawler(
+            proxylist_url=self.server.get_url(),
+            proxylist_reload_time=0.1,
+        )
+        bot.run()
+        print(hdl._messages)

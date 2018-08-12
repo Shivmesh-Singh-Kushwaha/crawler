@@ -1,6 +1,7 @@
 # coding: utf-8
 from unittest import TestCase
 
+from .util import temp_file
 from crawler import Response
 
 
@@ -39,3 +40,18 @@ class ResponseTestCase(TestCase):
         res = Response(body=b'<title>foo</title>', url=None)
 
         self.assertEqual(res.xpath('//title').text(), 'foo')
+
+    def test_text_method(self):
+        res = Response(body='<h1>Ленин жив</h1>'.encode('utf-8'), url=None)
+        self.assertEqual('<h1>Ленин жив</h1>', res.text())
+
+    def test_save_method(self):
+        data = '<h1>Ленин жив</h1>'.encode('utf-8')
+        with temp_file() as file_:
+            res = Response(body=data, url=None)
+            res.save(file_)
+            with open(file_, 'rb') as inp:
+                self.assertEqual(
+                    inp.read(),
+                    data
+                )
