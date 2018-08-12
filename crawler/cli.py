@@ -10,7 +10,7 @@ from crawler import Crawler
 logger = logging.getLogger('crawler.cli')
 
 
-def process_module(mod, reg):
+def find_crawlers_in_module(mod, reg):
     for key in dir(mod):
         val = getattr(mod, key)
         if (
@@ -54,9 +54,9 @@ def collect_crawlers():
                             #if path not in str(ex):
                             logger.exception('Failed to import %s', target_mod)
                         else:
-                            process_module(mod, reg)
+                            find_crawlers_in_module(mod, reg)
             else:
-                process_module(mod, reg)
+                find_crawlers_in_module(mod, reg)
 
     return reg
 
@@ -130,3 +130,5 @@ def run_command_start_project():
             logger.debug('New file: %s', path)
             with open(path, 'w') as out:
                 out.write(content)
+
+    return dst_dir

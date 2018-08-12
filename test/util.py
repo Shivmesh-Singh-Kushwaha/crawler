@@ -7,7 +7,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.request import urlopen, Request
 from urllib.parse import urlsplit
 from threading import Thread
-from tempfile import mkstemp
+from tempfile import mkstemp, mkdtemp
+from shutil import rmtree
 import os
 
 from test_server import TestServer
@@ -123,3 +124,10 @@ def temp_file(root_dir=None):
                          ' manager', file_)
         else:
             raise
+
+
+@contextmanager
+def temp_dir(root_dir=None):
+    dir_ = mkdtemp(dir=root_dir)
+    yield dir_
+    rmtree(dir_)

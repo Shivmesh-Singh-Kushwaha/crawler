@@ -46,20 +46,30 @@ class ProxyList(object):
         pl.load_url(url)
         return pl
 
+    @classmethod
+    def from_list(cls, items, **kwargs):
+        pl = ProxyList(**kwargs)
+        pl.load_list(items)
+        return pl
+
     def load_file(self, path):
         self._source = ('file', path)
         with open(path) as inp:
-            self.load_from_rawdata(inp.read())
+            self.load_from_rawdata(inp.read().splitlines())
             
     def load_url(self, url):
         self._source = ('url', url)
         return self.load_from_rawdata(
-            urlopen(url).read().decode('utf-8')
+            urlopen(url).read().decode('utf-8').splitlines()
         )
 
-    def load_from_rawdata(self, data): 
+    def load_list(self, items):
+        self._source = ('list', None)
+        return self.load_from_rawdata(items)
+
+    def load_from_rawdata(self, lines): 
         servers = []
-        for line in data.splitlines():
+        for line in lines:
             line = line.strip()
             match = RE_PROXYLINE.match(line)
             if not match:
@@ -85,3 +95,5 @@ class ProxyList(object):
             self.load_file(self._source[1])
         elif self._source[0] == 'url':
             self.load_url(self._source[1])
+        elif self._source[0] == 'list':
+            pass

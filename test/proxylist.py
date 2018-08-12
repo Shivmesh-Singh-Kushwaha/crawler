@@ -6,6 +6,7 @@ from test_server import TestServer
 import multiprocessing
 
 from crawler import Crawler, Request
+from crawler.proxylist import ProxyList
 from .util import (
     BaseTestCase, start_proxy_server, MemoryLoggingHandler,
     temp_file,
@@ -62,7 +63,7 @@ class BasicTestCase(BaseTestCase, TestCase):
             bot.run()
             self.assertEqual(1, proxy_server.num_requests)
 
-    def test_proxylist_reload(self):
+    def test_crawler_proxylist_reload(self):
 
         server = self.server
         proxy_server1 = '127.0.0.1:444'
@@ -139,3 +140,24 @@ class BasicTestCase(BaseTestCase, TestCase):
         )
         bot.run()
         print(hdl._messages)
+
+    def test_next_server(self):
+        pl = ProxyList.from_list(['foo:1', 'foo:2'])
+        self.assertEqual('foo:1', pl.next_server().address())
+        self.assertEqual('foo:2', pl.next_server().address())
+        self.assertEqual('foo:1', pl.next_server().address())
+
+    def test_random_server(self):
+        pl = ProxyList.from_list(['foo:1', 'foo:2'])
+        res = set()
+        for _ in range(10):
+            res.add(pl.random_server().address())
+        self.assertTrue('foo:1' in res)
+        self.assertTrue('foo:2' in res)
+
+    def test_reload_from_list(self):
+        pl = ProxyList.from_list(['foo:1', 'foo:2'])
+        self.assertEqual('foo:1', pl.next_server().address())
+        pl.reload()
+        self.assertEqual('foo:2', pl.next_server().address())
+        self.assertEqual('foo:1', pl.next_server().address())
