@@ -23,6 +23,7 @@ Usage Example
 .. code:: python
 
     import re
+    from urllib.parse import urlsplit
 
     from crawler import Crawler, Request
 
@@ -31,16 +32,24 @@ Usage Example
         re_title = re.compile(r'<title>([^<]+)</title>', re.S | re.I)
 
         def task_generator(self):
-            for line in open('var/domains.txt'):
-                host = line.strip()
-                yield Request('page', 'http://%s/' % host)
+            for host in ('yandex.ru', 'github.com'):
+                yield Request('page', 'https://%s/' % host, meta={'host': host})
 
         def handler_page(self, req, res):
-            try:
-                title = self.re_title.search(res.text()).group(1)
-            except AttributeError:
-                title = 'N/A'
+            title = res.xpath('//title').text(default='N/A')
             print('Title of [%s]: %s' % (req.url, title))
+
+            ext_urls = set()
+            for elem in res.xpath('//a[@href]'):
+                url = elem.attr('href')
+                parts = urlsplit(url)
+                if parts.netloc and req.meta['host'] not in parts.netloc:
+                    ext_urls.add(url)
+
+            print('External URLs:')
+            for url in ext_urls:
+                print(' * %s' % url)
+
 
     bot = TestCrawler(num_network_threads=10)
     bot.run()
