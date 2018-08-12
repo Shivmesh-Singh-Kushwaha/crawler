@@ -72,6 +72,7 @@ class Crawler(object):
         self._net_threads = {}
         self._parser_threads = {}
         self.proxylist = None
+        self.api_server = None
         if self.config['proxylist_file']:
             self.proxylist = ProxyList.from_file(
                 self.config['proxylist_file'],
@@ -333,14 +334,14 @@ class Crawler(object):
             proxylist_thread.daemon = True
             proxylist_thread.start()
 
-        api_server = build_api_server(self)
-        api_thread = Thread(target=api_server.serve_forever)
+        self.api_server = build_api_server(self)
+        api_thread = Thread(target=self.api_server.serve_forever)
         api_thread.daemon = True
         api_thread.start()
 
         if os.path.exists('var') and os.path.isdir('var'):
             with open('var/api_url.txt', 'w') as out:
-                out.write('http://%s/' % api_server.address())
+                out.write('http://%s/' % self.api_server.address())
 
         self.start_threads(
             self._net_threads,
@@ -406,7 +407,7 @@ class Crawler(object):
                             time.sleep(0.001)
                         self._resume_event.clear()
         finally:
-            api_server.shutdown()
+            self.api_server.shutdown()
             control_logger.debug('Inside finally')
             ## for x in range(self.config['num_network_threads']):
             ##     self._request_queue.put('kill')

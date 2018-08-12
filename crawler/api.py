@@ -67,8 +67,9 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
         self.response(content=content)
 
     def api_stop(self):
-        self.response()
-        #self._bot.shutdown()
+        content = json.dumps({}).encode('utf-8')
+        self.response(content=content)
+        self._bot.shutdown()
 
     def home(self):
         html_file = os.path.join(PACKAGE_DIR, 'static/api.html')
