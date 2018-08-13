@@ -59,3 +59,7 @@ class ResponseTestCase(TestCase):
     def test_lxml_tree_only_comment(self):
         res = Response(body=b'<-- foo -->', url=None)
         res._lxml_tree()
+
+    def test_lxml_tree_empty_body(self):
+        res = Response(body=b'', url=None)
+        res._lxml_tree()

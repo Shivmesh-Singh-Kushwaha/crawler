@@ -7,15 +7,18 @@ from lxml.etree import ParserError, XMLSyntaxError
 import defusedxml.lxml
 
 
-class ResponseTestCase(TestCase):
+class LXMLTestCase(TestCase):
+    """
+    Different version of lxml raises different exception for invalid HTML
+    """
     def test_xmlsyntax_error_empty_string(self):
-        self.assertRaises(
-            XMLSyntaxError, fromstring, b''
-        )
-        try:
+        with self.assertRaises((ParserError, XMLSyntaxError)) as cm:
             fromstring(b'')
-        except Exception as ex:
-            self.assertTrue(ex.args[0] is None)
+        self.assertTrue(
+            cm.exception.args[0] is None
+            or
+            'Document is empty' in cm.exception.args[0]
+        )
 
     def test_document_is_empty_only_comment(self):
         self.assertRaises(
@@ -43,11 +46,10 @@ class ResponseTestCase(TestCase):
 
     def test_missing_root_empty_string_defusedxml(self):
         parser = HTMLParser()
-        self.assertRaises(
-            XMLSyntaxError,
-            defusedxml.lxml.parse, BytesIO(b''), parser=parser
-        )
-        try:
+        with self.assertRaises((XMLSyntaxError, AssertionError)) as cm:
             defusedxml.lxml.parse(BytesIO(b''), parser=parser)
-        except Exception as ex:
-            self.assertTrue(ex.args[0] is None)
+        self.assertTrue(
+            cm.exception.args[0] is None
+            or
+            'ElementTree not initialized, missing root' in str(cm.exception)
+        )
