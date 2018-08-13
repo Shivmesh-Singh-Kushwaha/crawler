@@ -55,3 +55,7 @@ class ResponseTestCase(TestCase):
                     inp.read(),
                     data
                 )
+
+    def test_lxml_tree_only_comment(self):
+        res = Response(body=b'<-- foo -->', url=None)
+        res._lxml_tree()

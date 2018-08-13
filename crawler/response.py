@@ -1,9 +1,10 @@
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 import threading
 from io import BytesIO
 
 import defusedxml.lxml
 from lxml.html import HTMLParser
+from lxml.etree import ParserError, XMLSyntaxError
 from selection import XpathSelector
 
 __all__ = ('Response',)
@@ -45,7 +46,32 @@ class Response(object):
         if not hasattr(THREAD_STORAGE, 'lxml_parser'):
             THREAD_STORAGE.lxml_parser = HTMLParser()
         parser = THREAD_STORAGE.lxml_parser
-        tree = defusedxml.lxml.parse(BytesIO(self.body), parser=parser)
+        try:
+            tree = defusedxml.lxml.parse(
+                BytesIO(self.body or b'<body></body>'), parser=parser
+            )
+        except Exception as ex:
+            if (
+                    (
+                        isinstance(ex, AssertionError)
+                        and (
+                            'ElementTree not initialized, missing root'
+                            in str(ex)
+                        )
+                    ) or (
+                        isinstance(ex, ParserError)
+                        and 'Document is empty' in str(ex)
+                    )
+                ):
+                fixed_body = b'<body>%s</body>' % self.body
+                tree = defusedxml.lxml.parse(BytesIO(fixed_body), parser=parser)
+            else:
+                host = urlsplit(self.url).netloc
+                with open('var/fail-%s.html' % host, 'wb') as out:
+                    out.write(str(ex).encode() + b'\n')
+                    out.write(b'----------------------------------\n')
+                    out.write(self.body)
+                raise
         return tree
 
     def xpath(self, query):
