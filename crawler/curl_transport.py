@@ -4,6 +4,7 @@ import pycurl
 
 from .response import Response
 from .error import CrawlerNetworkError
+from .util import make_bytes, make_str
 
 
 class CurlTransport(object):
@@ -16,7 +17,7 @@ class CurlTransport(object):
             # Need to use cares resolver
             curl.setopt(pycurl.NOSIGNAL, 1)
             # Basic settings
-            curl.setopt(pycurl.URL, req.url)
+            curl.setopt(pycurl.URL, make_bytes(req.url))
             # Data processing
             curl.setopt(pycurl.WRITEDATA, data)
             # Force connections close
@@ -29,9 +30,9 @@ class CurlTransport(object):
             )
             # Proxy
             if req.proxy:
-                curl.setopt(pycurl.PROXY, req.proxy)
+                curl.setopt(pycurl.PROXY, make_bytes(req.proxy))
             if req.proxy_auth:
-                curl.setopt(pycurl.PROXYUSERPWD, req.proxy_auth)
+                curl.setopt(pycurl.PROXYUSERPWD, make_bytes(req.proxy_auth))
             key = 'PROXYTYPE_%s' % (req.proxy_type or 'http').upper()
             curl.setopt(pycurl.PROXYTYPE, getattr(pycurl, key))
             # Make request
@@ -41,9 +42,9 @@ class CurlTransport(object):
         else:
             resp = Response(
                 code=curl.getinfo(pycurl.HTTP_CODE),
-                url=req.url,
+                url=make_str(req.url),
                 body=data.getvalue(),
-                effective_url=curl.getinfo(pycurl.EFFECTIVE_URL),
+                effective_url=make_str(curl.getinfo(pycurl.EFFECTIVE_URL)),
                 bytes_downloaded=curl.getinfo(pycurl.SIZE_DOWNLOAD),
                 bytes_uploaded=curl.getinfo(pycurl.SIZE_UPLOAD),
                 times={
