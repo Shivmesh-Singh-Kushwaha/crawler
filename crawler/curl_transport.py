@@ -35,6 +35,9 @@ class CurlTransport(object):
                 curl.setopt(pycurl.PROXYUSERPWD, make_bytes(req.proxy_auth))
             key = 'PROXYTYPE_%s' % (req.proxy_type or 'http').upper()
             curl.setopt(pycurl.PROXYTYPE, getattr(pycurl, key))
+            # Redirect processing
+            curl.setopt(pycurl.FOLLOWLOCATION, bool(req.follow_redirect))
+            curl.setopt(pycurl.MAXREDIRS, int(req.redirect_limit))
             # Make request
             curl.perform()
         except pycurl.error as ex:

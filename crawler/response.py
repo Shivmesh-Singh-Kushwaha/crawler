@@ -66,11 +66,11 @@ class Response(object):
                 fixed_body = b'<body>%s</body>' % self.body
                 tree = defusedxml.lxml.parse(BytesIO(fixed_body), parser=parser)
             else:
-                host = urlsplit(self.url).netloc
-                with open('var/fail-%s.html' % host, 'wb') as out:
-                    out.write(str(ex).encode() + b'\n')
-                    out.write(b'----------------------------------\n')
-                    out.write(self.body)
+                #host = urlsplit(self.url).netloc
+                #with open('var/fail-%s.html' % host, 'wb') as out:
+                #    out.write(str(ex).encode() + b'\n')
+                #    out.write(b'----------------------------------\n')
+                #    out.write(self.body)
                 raise
         return tree
 

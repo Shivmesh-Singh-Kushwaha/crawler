@@ -16,6 +16,8 @@ class Request(object):
             proxy=None,
             proxy_auth=None,
             proxy_type='http',
+            follow_redirect=True,
+            redirect_limit=10,
         ):
         self.url = url
         if tag is None:
@@ -31,3 +33,5 @@ class Request(object):
         self.proxy = proxy
         self.proxy_auth = proxy_auth
         self.proxy_type = proxy_type
+        self.follow_redirect = follow_redirect
+        self.redirect_limit = redirect_limit
