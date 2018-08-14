@@ -57,7 +57,7 @@ Quick Way to Start New Project
 ==============================
 
 * Install crawler with `pip install crawler`
-* Run command `crawler_start_project <project_name>`
+* Run command `crawl_start_project <project_name>`
 * cd into new directory
 * Run `make build`
 
