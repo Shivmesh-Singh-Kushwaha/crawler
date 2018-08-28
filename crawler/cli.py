@@ -87,7 +87,13 @@ def run_command_crawl():
     else:
         cls = reg[opts.crawler_id]
         bot = cls()
-        bot.run()
+        try:
+            bot.run()
+        except KeyboardInterrupt:
+            pass
+        print('Stats:')
+        for key, val in bot.stat.counters.items():
+            print(' * %s: %s' % (key, val))
 
 
 def process_file_content(data, **kwargs):
