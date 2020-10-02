@@ -8,7 +8,7 @@ Crawler
 .. image:: https://coveralls.io/repos/lorien/crawler/badge.svg?branch=master
     :target: https://coveralls.io/r/lorien/crawler?branch=master
 
-This project is about:
+This project is tells about:
 
 * 100% test coverage
 * Speed
